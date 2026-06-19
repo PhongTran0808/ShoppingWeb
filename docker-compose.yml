@@ -1,0 +1,65 @@
+version: '3.3'
+
+services:
+  # MySQL Database (Local Dev)
+  mysql:
+    image: mysql:8.0
+    container_name: ecom-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: ecomuser
+      MYSQL_PASSWORD: ecompassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init-scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - ecom-network
+
+  # HashiCorp Vault (KMS)
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: ecom-vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    volumes:
+      - ./init-scripts/init-vault.sh:/init-vault.sh
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - ecom-network
+
+  # Keycloak (Identity Provider)
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: ecom-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak_db
+      KC_DB_USERNAME: ecomuser
+      KC_DB_PASSWORD: ecompassword
+    command: start-dev
+    ports:
+      - "9090:8080" # Mapping to 9090 to avoid conflict with API Gateway (8080)
+    depends_on:
+      - mysql
+    networks:
+      - ecom-network
+
+  # Redis (For Gateway Rate Limiting & Sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: ecom-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ecom-network
+
+networks:
+  ecom-network:
+    driver: bridge
