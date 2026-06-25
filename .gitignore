@@ -1,4 +1,4 @@
-# OS generated files
+# === OPERATING SYSTEM FILES ===
 .DS_Store
 .DS_Store?
 ._*
@@ -7,23 +7,27 @@
 ehthumbs.db
 Thumbs.db
 
-# Root level binaries and logs
-vault.exe
-vault_out.txt
-*.class
+# === SECURITY & SECRETS ===
+# Environment and secret files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+.env.example
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+config/ssl/
+vault-data/
 
-# Frontend (Next.js/React)
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/build/
-frontend/.env*.local
-frontend/.vercel/
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-
-# Backend (Spring Boot/Maven)
+# === JAVA / SPRING BOOT BUILD ARTIFACTS ===
+# Maven build outputs
 backend/**/target/
 backend/**/*.jar
 backend/**/*.war
@@ -35,13 +39,88 @@ backend/.mvn/
 !backend/.mvn/wrapper/maven-wrapper.jar
 backend/logs/
 
-# IDE and Project files
+# Build artifacts that should be ignored
+*.class
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# === FRONTEND (Next.js/React) ===
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.vercel/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.cache/
+frontend/.parcel-cache/
+
+# Global node modules
+node_modules/
+jspm_packages/
+
+# === IDE AND EDITOR FILES ===
 .idea/
 .vscode/
 *.iml
 *.project
 *.classpath
 *.factorypath
+*.swp
+*.swo
+*~
 
-# Other
+# === DOCKER & CONTAINERS ===
+# Docker volumes and runtime data
+docker-data/
+data/
+mysql-data/
+vault-data/
+redis-data/
+logs/
+
+# === MONITORING & ANALYTICS ===
+monitoring/prometheus/data/
+monitoring/grafana/data/
+monitoring/elasticsearch/data/
+
+# === SECURITY TESTING & EXPERIMENTS ===
+experiments/**/results/
+experiments/**/*.json
+experiments/**/*.csv
+experiments/**/*.log
+security-scan-results/
+*.sarif
+trivy-results/
+
+# === PYTHON (for scripts and experiments) ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.Python
+env/
+venv/
+ENV/
+*.pyc
+
+# === LOGS AND TEMPORARY FILES ===
 *.log
+tmp/
+temp/
+*.tmp
+*.bak
+vault.exe
+vault_out.txt
+
+# === TEST COVERAGE ===
+coverage/
+*.lcov
+.nyc_output/
+
+# === KIRO IDE ===
+.kiro/
