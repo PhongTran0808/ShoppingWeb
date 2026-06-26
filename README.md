@@ -258,89 +258,51 @@ certbot certonly --webroot -w ./ssl -d yourdomain.com
 
 ---
 
-## 🚀 Hướng dẫn Cài đặt & Khởi chạy
+## 🚀 Hướng dẫn Cài đặt & Khởi chạy (Mới nhất)
 
-### Bước 1: Khởi động Cơ sở Hạ tầng (Infrastructure)
+Để chạy dự án với kiến trúc bảo mật HTTPS và tên miền ảo `tienthienvienman.site.je` trên Windows, hãy làm theo các bước chuẩn sau:
 
-#### 1.1. Khởi động Core Infrastructure
-Dự án sử dụng Docker để giả lập môi trường hạ tầng nhanh chóng.
-Mở Terminal tại thư mục gốc của dự án và chạy:
-```bash
-# Khởi động MySQL, Vault, Keycloak, Redis
-docker-compose up -d
-```
+### Bước 1: Khởi động Backend (Spring Boot API)
+Đảm bảo Backend cung cấp API cho sản phẩm và người dùng đang chạy ổn định:
+1. Mở IDE (IntelliJ/Eclipse) cho phần mã nguồn Backend (Java Spring Boot).
+2. Chạy ứng dụng Backend để nó lắng nghe trên cổng **`8081`** (`http://localhost:8081`).
+*(Nếu không chạy Backend, hệ thống sẽ tự động dùng Mock Data có sẵn).*
 
-**Lưu ý:** Sau khi Vault khởi động xong, cấu hình Transit Engine:
-```bash
-docker exec -it ecom-vault sh /init-vault.sh
-```
+### Bước 2: Thiết lập Tên miền và HTTPS (Chỉ làm 1 lần đầu)
+Dự án sử dụng Apache làm Reverse Proxy để cung cấp SSL/TLS và tên miền ảo.
+1. Vào thư mục gốc của dự án: `D:\HKII-2026\MatMaUngDung\project`
+2. Nhấn chuột phải vào file **`setup_https.bat`** -> Chọn **Run as Administrator**.
+3. Tập lệnh sẽ tự động:
+   - Thêm `tienthienvienman.site.je` vào file `hosts` của Windows.
+   - Tạo chứng chỉ SSL bảo mật tự ký (Self-signed Certificate).
 
-#### 1.2. Khởi động Monitoring Stack (Tuỳ chọn nhưng khuyến nghị)
-```bash
-# Khởi động Prometheus, Grafana, ELK, Kafka, Jaeger
-docker-compose -f docker-compose.monitoring.yml up -d
-```
+### Bước 3: Khởi động Máy chủ Apache (Reverse Proxy)
+Mỗi lần muốn chạy web, bạn cần bật máy chủ Apache:
+1. Chạy file **`run_project.bat`** (Click đúp chuột bình thường).
+2. Tập lệnh sẽ tự động dọn dẹp tiến trình cũ và chạy máy chủ Apache ngầm (Background). 
+*Lưu ý: Apache sẽ tự động chuyển tiếp toàn bộ traffic từ HTTPS cổng 443 sang Next.js cổng 3000.*
 
-*Hệ thống monitoring bao gồm:*
-- **Prometheus** (Port 9091) - Thu thập metrics
-- **Grafana** (Port 3001) - Trực quan hóa metrics (admin/admin)
-- **Elasticsearch** (Port 9200) - Lưu trữ logs
-- **Kibana** (Port 5601) - Phân tích logs
-- **Kafka** (Port 9092) - Event streaming
-- **Kafka UI** (Port 8090) - Quản lý Kafka
-- **Jaeger** (Port 16686) - Distributed tracing
+### Bước 4: Khởi động Frontend (Next.js)
+1. Mở Terminal (Command Prompt hoặc VS Code Terminal).
+2. Chuyển vào thư mục frontend:
+   ```bash
+   cd frontend
+   ```
+3. Cài đặt thư viện (nếu chưa cài):
+   ```bash
+   npm install
+   ```
+4. Khởi chạy Next.js ở chế độ phát triển:
+   ```bash
+   npm run dev
+   ```
 
-#### 1.3. Kiểm tra Infrastructure Status
-```bash
-# Xem tất cả containers đang chạy
-docker ps
+### Bước 5: Trải nghiệm Website
+Mở trình duyệt (Khuyến nghị dùng **Tab Ẩn Danh - Incognito Mode** để tránh bộ nhớ đệm cũ):
+👉 Truy cập ngay: **[https://tienthienvienman.site.je](https://tienthienvienman.site.je)**
 
-# Xem logs nếu có vấn đề
-docker-compose logs -f vault
-docker-compose logs -f mysql
-```
+*(Giao diện Mua sắm an toàn với khoá xanh HTTPS hợp lệ sẽ xuất hiện!)*
 
-### Bước 2: Khởi động Backend (Spring Boot)
-Toàn bộ mã nguồn Backend nằm trong thư mục `backend/`.
-Mở IntelliJ IDEA, chọn Open thư mục `backend/`. IDEA sẽ nhận diện đây là dự án Maven.
-Hãy chạy lần lượt 5 module ứng dụng sau (Chạy file `*Application.java`):
-1. `GatewayApplication` (Port 8080)
-2. `CatalogApplication` (Port 8081)
-3. `CartApplication` (Port 8082)
-4. `OrderApplication` (Port 8083)
-5. `PaymentApplication` (Port 8084)
-
-*(Hoặc chạy qua terminal bằng lệnh `mvn spring-boot:run` tại từng thư mục).*
-
-### Bước 3: Khởi động Frontend (Next.js)
-Mở một cửa sổ Terminal mới, di chuyển vào thư mục `frontend/`:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Sau khi cài đặt xong dependencies và biên dịch thành công, mở trình duyệ web và truy cập vào:
-👉 **http://localhost:3000**
-
-### Bước 4: Chạy Security Experiments (Tuỳ chọn)
-Để kiểm tra các cơ chế bảo mật, chạy các experiments:
-
-```bash
-# Cài đặt Python dependencies
-pip install requests pytest faker
-
-# Token Replay Attack Test
-cd experiments/token-replay-test
-python test_token_replay.py
-
-# HMAC Signature Verification Test
-cd ../hmac-verification-test
-python test_hmac_signatures.py
-
-# Rate Limiting Test
-cd ../api-abuse-test
-python test_rate_limiting.py
-```
 
 ---
 

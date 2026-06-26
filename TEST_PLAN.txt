@@ -1,0 +1,508 @@
+================================================================================
+       TEST PLAN - VAULTCOMMERCE WEB APPLICATION
+       Phiên bản: 1.0  |  Ngày: 26/06/2026
+       URL Test: http://localhost:3000
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ CHUẨN BỊ TRƯỚC KHI TEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ Bước 1: Chạy run_backend.bat  → chờ "Started CatalogApplication on port 8081"
+ Bước 2: Chạy run_frontend.bat → chờ "Ready in Xms"
+ Bước 3: Mở trình duyệt vào   → http://localhost:3000
+ Bước 4: Mở DevTools (F12)     → Tab Console để theo dõi lỗi JS
+
+ Tài khoản test sẵn có:
+   Admin  : username = admin_root   | password = (bất kỳ)
+   User   : username = (bất kỳ)    | password = (bất kỳ)
+
+ Quy ước kết quả:
+   [PASS] = Chức năng hoạt động đúng như mong đợi
+   [FAIL] = Chức năng bị lỗi, ghi chú nguyên nhân
+   [SKIP] = Bỏ qua (chưa triển khai / không áp dụng)
+
+
+================================================================================
+ TC-01  TRANG CHỦ (/)
+================================================================================
+
+ TC-01-01  Hiển thị trang chủ
+   Thao tác : Mở http://localhost:3000
+   Mong đợi : Trang hiển thị đầy đủ:
+               - Navbar có logo "VaultCommerce"
+               - Tiêu đề hero "Trải nghiệm Mua sắm Tuyệt đối Bảo mật"
+               - 3 card tính năng (FLE / HashiCorp Vault / HMAC)
+               - Nút "Khám phá Sản phẩm" và "Tìm hiểu Kiến trúc"
+               - Chat widget góc dưới phải (icon bong bóng xanh)
+   Kết quả  : [ ]
+
+ TC-01-02  Navigation - Navbar
+   Thao tác : Click lần lượt các link trên Navbar:
+               Sản phẩm | Giỏ hàng | Đơn hàng của tôi | Kiến trúc Mật mã
+   Mong đợi : Mỗi link điều hướng đúng trang
+               Link active sáng màu xanh (emerald)
+   Kết quả  : [ ]
+
+ TC-01-03  Nút Hero - Khám phá Sản phẩm
+   Thao tác : Click "Khám phá Sản phẩm"
+   Mong đợi : Điều hướng đến /catalog
+   Kết quả  : [ ]
+
+ TC-01-04  Nút Hero - Tìm hiểu Kiến trúc
+   Thao tác : Click "Tìm hiểu Kiến trúc"
+   Mong đợi : Điều hướng đến /security
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-02  ĐĂNG KÝ (/register)
+================================================================================
+
+ TC-02-01  Hiển thị form đăng ký
+   Thao tác : Mở http://localhost:3000/register
+   Mong đợi : Form có 3 ô nhập: Tên đăng nhập | Email | Mật khẩu
+               Nút "Đăng ký" màu tím (indigo)
+               Link "Đăng nhập hệ thống" phía dưới
+   Kết quả  : [ ]
+
+ TC-02-02  Đăng ký để trống tất cả
+   Thao tác : Không nhập gì, click "Đăng ký"
+   Mong đợi : Hiển thị thông báo lỗi đỏ "Vui lòng điền đầy đủ thông tin!"
+               Không chuyển trang
+   Kết quả  : [ ]
+
+ TC-02-03  Đăng ký thiếu email
+   Thao tác : Nhập username + password, bỏ trống email, click "Đăng ký"
+   Mong đợi : Thông báo lỗi "Vui lòng điền đầy đủ thông tin!"
+   Kết quả  : [ ]
+
+ TC-02-04  Đăng ký mật khẩu quá ngắn (< 6 ký tự)
+   Thao tác : Điền đủ username + email, password = "123"
+   Mong đợi : Browser validation ngăn submit (minLength=6)
+   Kết quả  : [ ]
+
+ TC-02-05  Đăng ký thành công
+   Thao tác : Điền username = "testuser01"
+                      email    = "test@example.com"
+                      password = "Test@1234"
+              Click "Đăng ký"
+   Mong đợi : Spinner "Đang khởi tạo tài khoản bảo mật..." (1.5s)
+              Sau đó: icon checkmark xanh + "Đăng ký thành công!"
+              Tự động chuyển sang /catalog sau ~1.5s
+   Kết quả  : [ ]
+
+ TC-02-06  Nút "Đăng nhập hệ thống"
+   Thao tác : Click "Đăng nhập hệ thống" ở dưới form
+   Mong đợi : Điều hướng đến /login
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-03  ĐĂNG NHẬP (/login)
+================================================================================
+
+ TC-03-01  Hiển thị form đăng nhập
+   Thao tác : Mở http://localhost:3000/login
+   Mong đợi : Form có 2 ô: Tài khoản | Mật khẩu
+              Nút "Đăng nhập" màu tím
+              Link "Tạo tài khoản mới" phía dưới
+   Kết quả  : [ ]
+
+ TC-03-02  Đăng nhập để trống
+   Thao tác : Không nhập gì, click "Đăng nhập"
+   Mong đợi : Thông báo lỗi đỏ "Vui lòng nhập tài khoản và mật khẩu!"
+   Kết quả  : [ ]
+
+ TC-03-03  Đăng nhập với tài khoản thường
+   Thao tác : username = "user1" | password = "password123"
+              Click "Đăng nhập"
+   Mong đợi : Spinner "Đang xác thực thông tin..." (1.5s)
+              Checkmark xanh "Đăng nhập thành công!"
+              Chuyển sang /catalog
+              Navbar hiển thị tên "user1" + nút "Đăng xuất"
+   Kết quả  : [ ]
+
+ TC-03-04  Đăng nhập với tài khoản Admin
+   Thao tác : username = "admin_root" | password = (bất kỳ)
+              Click "Đăng nhập"
+   Mong đợi : Chuyển sang /admin (Dashboard quản trị)
+              Navbar có thêm nút "Dashboard"
+   Kết quả  : [ ]
+
+ TC-03-05  Bấm Enter để submit
+   Thao tác : Điền username + password, nhấn phím Enter
+   Mong đợi : Form được submit (giống click nút)
+   Kết quả  : [ ]
+
+ TC-03-06  Nút "Tạo tài khoản mới"
+   Thao tác : Click "Tạo tài khoản mới"
+   Mong đợi : Điều hướng đến /register
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-04  ĐĂNG XUẤT
+================================================================================
+
+ TC-04-01  Đăng xuất thành công
+   Thao tác : Sau khi đăng nhập, click nút "Đăng xuất" trên Navbar
+   Mong đợi : Navbar trở về trạng thái chưa đăng nhập
+              Hiển thị nút "Đăng nhập" và "Đăng ký"
+              vault_token và vault_user bị xóa khỏi localStorage
+              (Kiểm tra: F12 > Application > Local Storage)
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-05  TRANG CATALOG - DANH SÁCH SẢN PHẨM (/catalog)
+================================================================================
+
+ TC-05-01  Hiển thị danh sách sản phẩm
+   Thao tác : Mở http://localhost:3000/catalog
+   Mong đợi : Hiển thị tiêu đề "Khám phá X Sản phẩm"
+              Grid sản phẩm 4 cột (desktop)
+              Mỗi card có: Ảnh | Tên | Danh mục | Mô tả | Giá | Nút "Thêm"
+              Pagination nếu có nhiều hơn 10 sản phẩm
+   Kết quả  : [ ]
+
+ TC-05-02  Tìm kiếm theo tên sản phẩm
+   Thao tác : Gõ "iPhone" vào ô tìm kiếm
+   Mong đợi : Danh sách lọc ngay lập tức (real-time)
+              Chỉ hiển thị sản phẩm có tên chứa "iPhone"
+   Kết quả  : [ ]
+
+ TC-05-03  Tìm kiếm theo thương hiệu
+   Thao tác : Gõ "Samsung" vào ô tìm kiếm
+   Mong đợi : Hiển thị các sản phẩm Samsung
+   Kết quả  : [ ]
+
+ TC-05-04  Tìm kiếm không có kết quả
+   Thao tác : Gõ "xyzxyz123" vào ô tìm kiếm
+   Mong đợi : Hiển thị "Không tìm thấy sản phẩm nào phù hợp..."
+   Kết quả  : [ ]
+
+ TC-05-05  Xóa từ khóa tìm kiếm
+   Thao tác : Sau khi tìm "iPhone", xóa hết nội dung ô tìm kiếm
+   Mong đợi : Danh sách đầy đủ sản phẩm hiện lại
+   Kết quả  : [ ]
+
+ TC-05-06  Lọc danh mục - Smartphone
+   Thao tác : Chọn "Smartphone" trong dropdown "Tất cả Danh mục"
+   Mong đợi : Chỉ hiển thị sản phẩm category = Smartphone
+   Kết quả  : [ ]
+
+ TC-05-07  Lọc danh mục - Laptop
+   Thao tác : Chọn "Laptop" trong dropdown
+   Mong đợi : Chỉ hiển thị Laptop
+   Kết quả  : [ ]
+
+ TC-05-08  Lọc giá - Dưới 10 Triệu
+   Thao tác : Chọn "Dưới 10 Triệu" trong dropdown giá
+   Mong đợi : Chỉ hiển thị sản phẩm giá < 10.000.000 đ
+   Kết quả  : [ ]
+
+ TC-05-09  Lọc giá - 10-30 Triệu
+   Thao tác : Chọn "10 - 30 Triệu"
+   Mong đợi : Sản phẩm có giá từ 10tr đến 30tr
+   Kết quả  : [ ]
+
+ TC-05-10  Lọc giá - Trên 30 Triệu
+   Thao tác : Chọn "Trên 30 Triệu"
+   Mong đợi : Chỉ sản phẩm giá > 30.000.000 đ
+   Kết quả  : [ ]
+
+ TC-05-11  Kết hợp tìm kiếm + lọc danh mục
+   Thao tác : Gõ "Galaxy" + chọn "Smartphone"
+   Mong đợi : Chỉ Samsung Galaxy thuộc Smartphone
+   Kết quả  : [ ]
+
+ TC-05-12  Kết hợp tìm kiếm + lọc giá
+   Thao tác : Gõ "Samsung" + chọn "10 - 30 Triệu"
+   Mong đợi : Samsung có giá 10tr-30tr
+   Kết quả  : [ ]
+
+ TC-05-13  Reset về "Tất cả" sau khi lọc
+   Thao tác : Chọn "Tất cả Danh mục" và "Tất cả Giá"
+   Mong đợi : Hiển thị lại toàn bộ 50 sản phẩm
+   Kết quả  : [ ]
+
+ TC-05-14  Phân trang (Pagination)
+   Thao tác : Không lọc gì, click trang 2
+   Mong đợi : Hiển thị sản phẩm 11-20
+              Nút trang 2 active (màu indigo)
+   Kết quả  : [ ]
+
+ TC-05-15  Tìm kiếm reset về trang 1
+   Thao tác : Đang ở trang 2, gõ "Apple" vào tìm kiếm
+   Mong đợi : Tự động nhảy về trang 1
+   Kết quả  : [ ]
+
+ TC-05-16  Thêm vào giỏ hàng từ catalog
+   Thao tác : Hover vào card sản phẩm bất kỳ, click nút "Thêm"
+   Mong đợi : Toast notification xanh "Đã thêm [Tên sản phẩm] vào giỏ hàng!"
+              Toast tự biến mất sau 3 giây
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-06  CHI TIẾT SẢN PHẨM (/catalog/[id])
+================================================================================
+
+ TC-06-01  Mở trang chi tiết sản phẩm
+   Thao tác : Click vào tên/hình ảnh sản phẩm bất kỳ trong catalog
+   Mong đợi : Chuyển sang /catalog/[id]
+              Hiển thị: Ảnh lớn | Tên | Danh mục | Giá | Mô tả
+              Card "Giao dịch An toàn" và "Giao hàng Cấp tốc"
+              Bộ điều chỉnh số lượng + nút "Thêm vào Giỏ hàng"
+   Kết quả  : [ ]
+
+ TC-06-02  Tăng số lượng
+   Thao tác : Click nút "+" nhiều lần
+   Mong đợi : Số lượng tăng dần: 1 → 2 → 3...
+   Kết quả  : [ ]
+
+ TC-06-03  Giảm số lượng - không về 0
+   Thao tác : Khi số lượng = 1, click nút "-"
+   Mong đợi : Số lượng giữ nguyên = 1
+   Kết quả  : [ ]
+
+ TC-06-04  Thêm vào giỏ hàng
+   Thao tác : Đặt số lượng = 2, click "Thêm vào Giỏ hàng"
+   Mong đợi : Toast xanh "Đã thêm 2 sản phẩm vào giỏ hàng!"
+   Kết quả  : [ ]
+
+ TC-06-05  Truy cập ID không tồn tại
+   Thao tác : Mở http://localhost:3000/catalog/9999
+   Mong đợi : Tự động redirect về /catalog
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-07  GIỎ HÀNG (/cart)
+================================================================================
+
+ TC-07-01  Giỏ hàng trống
+   Thao tác : Mở /cart khi chưa thêm gì
+   Mong đợi : Thông báo "Giỏ hàng trống"
+   Kết quả  : [ ]
+
+ TC-07-02  Hiển thị sản phẩm trong giỏ
+   Thao tác : Thêm 2-3 sản phẩm, mở /cart
+   Mong đợi : Danh sách sản phẩm, tổng tiền hiển thị đúng
+   Kết quả  : [ ]
+
+ TC-07-03  Thay đổi số lượng trong giỏ
+   Thao tác : Tăng/giảm số lượng sản phẩm
+   Mong đợi : Tổng tiền cập nhật tức thì
+   Kết quả  : [ ]
+
+ TC-07-04  Xóa sản phẩm khỏi giỏ
+   Thao tác : Click nút xóa (X) của sản phẩm
+   Mong đợi : Sản phẩm biến khỏi giỏ, tổng tiền cập nhật
+   Kết quả  : [ ]
+
+ TC-07-05  Nút Thanh toán
+   Thao tác : Click "Thanh toán"
+   Mong đợi : Điều hướng sang /checkout
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-08  THANH TOÁN (/checkout)
+================================================================================
+
+ TC-08-01  Hiển thị trang checkout
+   Thao tác : Mở /checkout (sau khi có hàng trong giỏ)
+   Mong đợi : Form địa chỉ giao hàng
+              Danh sách sản phẩm và tổng tiền
+   Kết quả  : [ ]
+
+ TC-08-02  Đặt hàng thành công
+   Thao tác : Điền đầy đủ thông tin, click "Đặt hàng"
+   Mong đợi : Thông báo đặt hàng thành công, giỏ hàng làm trống
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-09  ĐƠN HÀNG (/orders)
+================================================================================
+
+ TC-09-01  Xem lịch sử đơn hàng
+   Thao tác : Mở /orders sau khi đã đặt hàng
+   Mong đợi : Danh sách đơn hàng: Mã đơn | Ngày | Sản phẩm | Tổng | Trạng thái
+   Kết quả  : [ ]
+
+ TC-09-02  Đơn hàng trống
+   Thao tác : Mở /orders khi chưa đặt đơn nào
+   Mong đợi : Thông báo "Chưa có đơn hàng nào"
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-10  KIẾN TRÚC MẬT MÃ (/security)
+================================================================================
+
+ TC-10-01  Hiển thị trang security
+   Thao tác : Mở http://localhost:3000/security
+   Mong đợi : Trang tải thành công, nội dung về kiến trúc bảo mật
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-11  ADMIN DASHBOARD (/admin)
+================================================================================
+
+ TC-11-01  Truy cập admin khi chưa đăng nhập
+   Thao tác : Mở http://localhost:3000/admin
+   Mong đợi : Chuyển hướng về /login HOẶC hiển thị lỗi 403
+   Kết quả  : [ ]
+
+ TC-11-02  Đăng nhập Admin và vào Dashboard
+   Thao tác : Đăng nhập "admin_root" → click "Dashboard" trên Navbar
+   Mong đợi : /admin hiển thị sidebar: Dashboard|Users|Products|Orders|Chat|Settings
+   Kết quả  : [ ]
+
+ TC-11-03  Admin - Quản lý Users
+   Thao tác : Click "Users" trong sidebar
+   Mong đợi : Bảng danh sách user: ID | Username | Role | Password Hash
+   Kết quả  : [ ]
+
+ TC-11-04  Admin - Quản lý Products
+   Thao tác : Click "Products" trong sidebar
+   Mong đợi : Bảng sản phẩm với các nút CRUD
+   Kết quả  : [ ]
+
+ TC-11-05  Admin - Quản lý Orders
+   Thao tác : Click "Orders" trong sidebar
+   Mong đợi : Danh sách đơn hàng toàn hệ thống
+   Kết quả  : [ ]
+
+ TC-11-06  Admin - Chat Support
+   Thao tác : Click "Chat" trong sidebar
+   Mong đợi : Giao diện chat admin
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-12  CHAT WIDGET
+================================================================================
+
+ TC-12-01  Mở chat widget
+   Thao tác : Click icon bong bóng xanh góc dưới phải
+   Mong đợi : Panel chat xuất hiện, tin nhắn chào "Xin chào! Tôi có thể giúp gì..."
+   Kết quả  : [ ]
+
+ TC-12-02  Gửi tin nhắn
+   Thao tác : Gõ "Xin chào!" → click gửi hoặc Enter
+   Mong đợi : Tin nhắn xuất hiện bên phải (màu indigo)
+   Kết quả  : [ ]
+
+ TC-12-03  Đóng chat widget
+   Thao tác : Click nút X
+   Mong đợi : Panel đóng lại, icon bong bóng hiện lại
+   Kết quả  : [ ]
+
+ TC-12-04  Rate Limiting - chống spam
+   Thao tác : Gửi liên tục hơn 60 tin nhắn trong 1 phút
+   Mong đợi : Cảnh báo đỏ "Bạn đang thao tác quá nhanh!"
+              Ô nhập bị vô hiệu hóa tạm thời
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-13  RESPONSIVE - ĐA THIẾT BỊ
+================================================================================
+
+ TC-13-01  Desktop (1920x1080)
+   Thao tác : Test trên màn hình đầy đủ
+   Mong đợi : Grid 4 cột, Navbar đầy đủ
+   Kết quả  : [ ]
+
+ TC-13-02  Tablet (768px - F12 DevTools)
+   Thao tác : F12 → Toggle Device → iPad
+   Mong đợi : Grid 2-3 cột, layout thu gọn hợp lý
+   Kết quả  : [ ]
+
+ TC-13-03  Mobile (375px - F12 DevTools)
+   Thao tác : F12 → Toggle Device → iPhone
+   Mong đợi : Grid 1 cột, dễ thao tác trên màn nhỏ
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-14  KIỂM TRA BẢO MẬT & API
+================================================================================
+
+ TC-14-01  localStorage sau đăng nhập
+   Thao tác : Đăng nhập → F12 → Application → Local Storage
+   Mong đợi : Có key "vault_token" (hash hex dài)
+              Có key "vault_user" chứa {username, role}
+   Kết quả  : [ ]
+
+ TC-14-02  Swagger UI
+   Thao tác : Mở http://localhost:8081/swagger-ui/index.html
+   Mong đợi : Giao diện Swagger hiển thị đủ các nhóm API
+   Kết quả  : [ ]
+
+ TC-14-03  API public - GET products
+   Thao tác : Mở http://localhost:8081/api/products
+   Mong đợi : JSON danh sách sản phẩm (không cần token)
+   Kết quả  : [ ]
+
+ TC-14-04  API protected - POST product không có token
+   Thao tác : Swagger → POST /api/products (không Authorize)
+   Mong đợi : HTTP 401 Unauthorized
+   Kết quả  : [ ]
+
+
+================================================================================
+ TC-15  EDGE CASES & XỬ LÝ LỖI
+================================================================================
+
+ TC-15-01  URL không tồn tại (404)
+   Thao tác : Mở http://localhost:3000/trang-khong-ton-tai
+   Mong đợi : Trang 404 hoặc redirect về /
+   Kết quả  : [ ]
+
+ TC-15-02  Backend offline - Catalog dùng Mock Data
+   Thao tác : Tắt run_backend.bat, truy cập /catalog
+   Mong đợi : Vẫn hiển thị 50 sản phẩm Mock Data
+   Kết quả  : [ ]
+
+ TC-15-03  Làm mới trang giữ giỏ hàng
+   Thao tác : Thêm sản phẩm vào giỏ → F5
+   Mong đợi : Giỏ hàng vẫn còn sản phẩm sau reload
+   Kết quả  : [ ]
+
+ TC-15-04  Không có lỗi JS trong Console
+   Thao tác : Duyệt qua tất cả trang: home, catalog, login, register, cart
+   Mong đợi : F12 Console không có lỗi đỏ
+   Kết quả  : [ ]
+
+
+================================================================================
+ TỔNG KẾT
+================================================================================
+
+ Tổng số test case : 55
+ PASS              : ___
+ FAIL              : ___
+ SKIP              : ___
+
+ Test case thất bại (ghi chú nguyên nhân):
+ ─────────────────────────────────────────
+ TC-___-___  : ________________________________________________
+ TC-___-___  : ________________________________________________
+ TC-___-___  : ________________________________________________
+ TC-___-___  : ________________________________________________
+
+ Nhận xét chung:
+ ─────────────────────────────────────────
+ ________________________________________________________________________
+ ________________________________________________________________________
+
+
+================================================================================
+ Người thực hiện: _______________  |  Ngày test: ___/___/2026
+================================================================================
