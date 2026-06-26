@@ -43,6 +43,40 @@ Dự án Shopping Web này được thiết kế theo **Transaction-Centric Secu
 
 ---
 
+## 🚀 **HƯỚNG DẪN KHỞI CHẠY NHANH (Bắt buộc cho Local/Git Clone)**
+
+Để chạy dự án đầy đủ chức năng và HTTPS, vui lòng làm theo các bước sau:
+
+### Bước 1: Cấu hình tên miền Local (Bắt buộc để chạy HTTPS)
+Để tên miền `tienthienvienman.site.je` hoạt động trên máy của bạn, bạn cần trỏ nó về `localhost`.
+1. Mở Notepad dưới quyền **Administrator** (Run as Administrator).
+2. Mở file: `C:\Windows\System32\drivers\etc\hosts`
+3. Thêm dòng sau vào cuối file và lưu lại:
+   ```text
+   127.0.0.1       tienthienvienman.site.je
+   ```
+
+### Bước 2: Khởi động Backend (Spring Boot)
+1. Mở thư mục gốc của dự án.
+2. Double-click vào file **`run_backend.bat`**.
+3. *Lưu ý:* Lần đầu chạy, Maven sẽ mất 1-2 phút để tải dependencies. Hãy chờ đến khi cửa sổ hiện dòng `Started CatalogApplication`.
+4. 📋 **Swagger API UI:** [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
+
+### Bước 3: Khởi động Frontend & Apache HTTPS
+1. Ở thư mục gốc của dự án, double-click vào file **`run_frontend.bat`**.
+2. Script này sẽ tự động:
+   - Khởi động Apache ngầm (cung cấp HTTPS/SSL).
+   - Khởi động Next.js Frontend.
+3. Chờ đến khi thấy dòng `✓ Ready in ...ms`.
+
+### Bước 4: Truy cập Ứng dụng
+- 🔒 **Link HTTPS (Khuyên dùng):** [https://tienthienvienman.site.je](https://tienthienvienman.site.je)
+- 🌐 **Link HTTP thông thường:** [http://localhost:3000](http://localhost:3000)
+
+> **Lưu ý về SSL:** Vì đây là chứng chỉ SSL tự ký, trình duyệt sẽ cảnh báo. Bạn chọn **Advanced (Nâng cao) > Proceed / Tiếp tục** là được.
+
+---
+
 ## 📊 **TRẠNG THÁI DỰ ÁN** (Updated 2024-12-26)
 
 ### ✅ **SECURITY CORE COMPLETED (95%)**
@@ -357,7 +391,7 @@ Hệ thống được thiết kế với các cơ chế bảo mật ngầm (Zero
 *Chúc bạn có trải nghiệm tuyệt vời với nền tảng Secure E-commerce Platform!*
 
 
-## 🔬 Security Experiments (YEUCAU.md Section 8.2)
+## 🔬 Security Experiments
 
 Dự án bao gồm 5 experiments chính theo yêu cầu:
 
@@ -492,9 +526,8 @@ ShoppingWeb/
 │
 ├── docker-compose.yml            # Core infrastructure
 ├── docker-compose.monitoring.yml # Monitoring stack
-├── database_schema_and_mock_data.md
-├── YEUCAU.md                     # Project requirements
-└── README.md                     # This file
+├── SECURITY_ARCHITECTURE.md        # Detailed security specs
+├── README.md                       # This file
 ```
 
 ---
