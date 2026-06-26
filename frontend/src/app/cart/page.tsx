@@ -74,6 +74,7 @@ export default function CartPage() {
                       src={item.imageUrl || "/picture.png"} 
                       alt={item.name} 
                       className="w-full h-full object-contain"
+                      onError={(e) => { e.currentTarget.src = "/picture.png"; }}
                     />
                   </div>
                   <div className="flex-1">

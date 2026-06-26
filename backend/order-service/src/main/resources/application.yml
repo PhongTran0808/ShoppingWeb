@@ -5,6 +5,9 @@ spring:
   application:
     name: order-service
   datasource:
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 0
     url: jdbc:mysql://mysql-1e26ae34-tuitentu131-e142.g.aivencloud.com:18003/shopping?useSSL=true&requireSSL=true&serverTimezone=UTC
     username: avnadmin
     password: AVNS_b4Ayu0j9wQLl_83CZvm

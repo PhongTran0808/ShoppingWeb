@@ -26,7 +26,7 @@ export default function ProductDetailPage() {
     }
 
     // Lấy thông tin sản phẩm
-    fetch(`http://localhost:8081/api/products/${id}`)
+    fetch(`/api/catalog/products/${id}`)
       .then(res => res.json())
       .then(data => {
         if (data && data.id) {
@@ -99,9 +99,10 @@ export default function ProductDetailPage() {
           <div className="flex-1">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-12 aspect-square flex items-center justify-center relative overflow-hidden">
               <img 
-                src="/picture.png" 
-                alt={product.name} 
-                className="w-full h-full object-contain hover:scale-110 transition-transform duration-700" 
+                src={product.imageUrl || "/picture.png"} 
+                alt={product.name}
+                className="w-full h-full object-contain p-8 hover:scale-105 transition-transform duration-500"
+                onError={(e) => { e.currentTarget.src = "/picture.png"; }}
               />
               <div className="absolute top-6 right-6 bg-emerald-500/20 text-emerald-400 text-sm font-bold px-4 py-2 rounded-full border border-emerald-500/20 backdrop-blur-md flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> Còn hàng (In Stock)

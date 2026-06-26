@@ -12,10 +12,19 @@ export default function AdminUsersPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    const token = localStorage.getItem("vault_token") || "";
     // Gọi API thật từ Spring Boot (identity/catalog service)
-    fetch("http://localhost:8081/api/users")
-      .then(res => {
-        if (!res.ok) throw new Error("Backend not available");
+    fetch("/api/catalog/users", {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(async res => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Phiên đăng nhập hết hạn hoặc bạn chưa đăng nhập (Lỗi 401). Vui lòng đăng xuất và đăng nhập lại!");
+          }
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text}`);
+        }
         return res.json();
       })
       .then(data => {
@@ -33,8 +42,12 @@ export default function AdminUsersPage() {
     if (!actionUser) return;
     setErrorMsg("");
     try {
+      const token = localStorage.getItem("vault_token") || "";
       // Soft Delete qua API
-      await fetch(`http://localhost:8081/api/users/${actionUser.id}`, { method: "DELETE" });
+      await fetch(`/api/catalog/users/${actionUser.id}`, { 
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       
       // Update local state
       setUsers(users.map(u => u.id === actionUser.id ? { ...u, isActive: !actionUser.isActive } : u));

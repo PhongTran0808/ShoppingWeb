@@ -59,7 +59,7 @@ export default function OrdersPage() {
                   {order.items.map((item: any, i: number) => (
                     <div key={i} className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-white/5 rounded-xl p-2 shrink-0">
-                        <img src="/picture.png" alt={item.name} className="w-full h-full object-contain" />
+                        <img src={item.imageUrl || "/picture.png"} alt={item.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = "/picture.png"; }} />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-white">{item.name}</h4>

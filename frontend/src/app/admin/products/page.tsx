@@ -9,9 +9,15 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     // Luôn ưu tiên đọc từ MySQL Backend API
-    fetch("http://localhost:8081/api/products")
-      .then(res => {
-        if (!res.ok) throw new Error("Backend not available");
+    fetch("/api/catalog/products")
+      .then(async res => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Phiên đăng nhập hết hạn hoặc bạn chưa đăng nhập (Lỗi 401). Vui lòng đăng xuất và đăng nhập lại!");
+          }
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text}`);
+        }
         return res.json();
       })
       .then(data => {
@@ -68,7 +74,7 @@ export default function AdminProductsPage() {
     try {
       if (editId !== null) {
         // Cập nhật (PUT) vào MySQL
-        const res = await fetch(`http://localhost:8081/api/products/${editId}`, {
+        const res = await fetch(`/api/catalog/products/${editId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify(productPayload)
@@ -86,7 +92,7 @@ export default function AdminProductsPage() {
         }
       } else {
         // Thêm mới (POST) vào MySQL
-        const res = await fetch("http://localhost:8081/api/products", {
+        const res = await fetch("/api/catalog/products", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify(productPayload)
@@ -129,7 +135,7 @@ export default function AdminProductsPage() {
 
     try {
       // Xóa mềm (DELETE) trên MySQL
-      const res = await fetch(`http://localhost:8081/api/products/${deleteConfirmId}`, {
+      const res = await fetch(`/api/catalog/products/${deleteConfirmId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });

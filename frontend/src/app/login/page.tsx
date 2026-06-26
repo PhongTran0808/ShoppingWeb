@@ -24,26 +24,33 @@ export default function LoginPage() {
       setAuthStatus("authenticating");
       setErrorMsg("");
 
-      const res = await fetch("http://localhost:8081/api/users/login", {
+      const res = await fetch("/api/catalog/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        if (text) data = JSON.parse(text);
+      } catch (e) {
+        console.warn("Response is not valid JSON:", text);
+      }
 
-      if (res.ok && data.success) {
-        localStorage.setItem("vault_token", data.token);
-        localStorage.setItem("vault_user", JSON.stringify(data.user));
+      if (res.ok && data.success !== false) {
+        // Assume success if res.ok and success wasn't explicitly false
+        if (data.token) localStorage.setItem("vault_token", data.token);
+        if (data.user) localStorage.setItem("vault_user", JSON.stringify(data.user));
         
         setAuthStatus("success");
         
         setTimeout(() => {
-          const role = data.user.role || "";
+          const role = data?.user?.role || "";
           window.location.href = role === "ROLE_ADMIN" ? "/admin" : "/catalog";
         }, 1500);
       } else {
-        setErrorMsg(data.message || "Đăng nhập thất bại!");
+        setErrorMsg(data.message || (res.status === 401 ? "Sai tên đăng nhập hoặc mật khẩu" : "Đăng nhập thất bại (Lỗi " + res.status + ")"));
         setAuthStatus("idle");
       }
     } catch (err: any) {

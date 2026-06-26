@@ -48,7 +48,7 @@ export default function CatalogPage() {
     }
 
     // Thử gọi API thật, nếu lỗi thì giữ nguyên MOCK_PRODUCTS (50 sản phẩm)
-    fetch("http://localhost:8081/api/products")
+    fetch("/api/catalog/products")
       .then(res => res.json())
       .then(data => {
         let items = [];
@@ -179,9 +179,10 @@ export default function CatalogPage() {
                 {/* Product Image Area */}
                 <div className="relative aspect-square bg-white/5 p-8 flex items-center justify-center">
                   <img 
-                    src="/picture.png" 
+                    src={product.imageUrl || "/picture.png"} 
                     alt={product.name}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => { e.currentTarget.src = "/picture.png"; }}
                   />
                   <div className="absolute top-4 right-4 bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-500/20 backdrop-blur-md">
                     In Stock

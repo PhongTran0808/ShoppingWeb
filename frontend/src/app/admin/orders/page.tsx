@@ -11,7 +11,7 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     // Lấy dữ liệu đơn hàng từ Backend API
     const token = localStorage.getItem("vault_token") || "";
-    fetch("http://localhost:8083/api/orders/all", {
+    fetch("/api/orders/all", {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => {
@@ -37,7 +37,7 @@ export default function AdminOrdersPage() {
   const handleVerifyOrder = async (orderId: string) => {
     const token = localStorage.getItem("vault_token") || "";
     try {
-      const res = await fetch(`http://localhost:8083/api/orders/${orderId}/status?status=SUCCESS`, {
+      const res = await fetch(`/api/orders/${orderId}/status?status=SUCCESS`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -126,22 +126,28 @@ export default function AdminOrdersPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-bold text-indigo-400 font-mono">{order.id}</span>
                     <span className={`px-3 py-1 border rounded-full text-xs font-semibold flex items-center gap-1 ${
-                      order.status === "SUCCESS" 
+                      (order.status === "SUCCESS" || order.status === "PAID") 
                         ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                         : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                     }`}>
-                      <CheckCircle2 className="w-3 h-3" /> {order.status === "SUCCESS" ? "Đã xác nhận" : "Chờ xác nhận"}
+                      <CheckCircle2 className="w-3 h-3" /> {(order.status === "SUCCESS" || order.status === "PAID") ? "Đã thanh toán" : "Chờ xác nhận"}
                     </span>
                     <span className="text-sm text-zinc-500">
-                      {new Date(order.date).toLocaleString('vi-VN')}
+                      {new Date(order.createdAt).toLocaleString('vi-VN')}
                     </span>
                   </div>
 
                   <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                    <h4 className="text-sm font-semibold text-zinc-300 mb-2">Thông tin giao hàng (Decrypted)</h4>
-                    <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Người nhận:</strong> {order.shippingInfo?.fullName}</p>
-                    <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Điện thoại:</strong> {order.shippingInfo?.phone}</p>
-                    <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Địa chỉ:</strong> {order.shippingInfo?.address}</p>
+                    <h4 className="text-sm font-semibold text-zinc-300 mb-2">Thông tin giao hàng</h4>
+                    {order.shippingInfo ? (
+                      <>
+                        <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Người nhận:</strong> {order.shippingInfo.fullName}</p>
+                        <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Điện thoại:</strong> {order.shippingInfo.phone}</p>
+                        <p className="text-sm text-zinc-400"><strong className="text-zinc-200">Địa chỉ:</strong> {order.shippingInfo.address}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-zinc-500 italic">Dữ liệu thực tế được mã hóa và lưu tại Vault (ẩn trên UI)</p>
+                    )}
                   </div>
                 </div>
 
@@ -152,7 +158,7 @@ export default function AdminOrdersPage() {
                     <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                       {order.items.map((item: any, i: number) => (
                         <div key={i} className="flex justify-between items-center text-sm">
-                          <span className="text-zinc-400 line-clamp-1 flex-1 pr-4">{item.quantity}x {item.name}</span>
+                          <span className="text-zinc-400 line-clamp-1 flex-1 pr-4">{item.quantity}x {item.productName}</span>
                           <span className="text-zinc-300 whitespace-nowrap">
                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                           </span>
@@ -165,10 +171,10 @@ export default function AdminOrdersPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-zinc-400 text-sm">Tổng thanh toán:</span>
                       <span className="text-xl font-bold text-white">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}
                       </span>
                     </div>
-                    {order.status === "PENDING_VERIFICATION" && (
+                    {(order.status === "PENDING_VERIFICATION" || order.status === "PENDING_PAYMENT") && (
                       <button 
                         onClick={() => handleVerifyOrder(order.id)}
                         className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"

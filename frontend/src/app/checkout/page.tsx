@@ -81,7 +81,7 @@ export default function CheckoutPage() {
     try {
       // 1. Sync cart to backend first
       for (const item of cartItems) {
-        await fetch("http://localhost:8082/api/cart/items", {
+        await fetch("/api/cart/items", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
         phoneNumber: phone
       };
 
-      const res = await fetch("http://localhost:8083/api/orders", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -110,7 +110,7 @@ export default function CheckoutPage() {
         const orderData = await res.json();
         
         // 3. Create Payment Transaction
-        await fetch("http://localhost:8084/api/payments", {
+        await fetch("/api/payments", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4">
                     <div className="w-16 h-16 bg-white/5 rounded-lg p-1 shrink-0">
-                      <img src="/picture.png" alt={item.name} className="w-full h-full object-contain" />
+                      <img src={item.imageUrl || "/picture.png"} alt={item.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = "/picture.png"; }} />
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-sm line-clamp-1 text-zinc-200">{item.name}</h4>

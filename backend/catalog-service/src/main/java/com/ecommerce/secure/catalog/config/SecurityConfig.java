@@ -21,9 +21,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(org.springframework.security.config.Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
-                // === Swagger UI & OpenAPI docs - PUBLIC ===
+                // === OPTIONS for CORS Preflight ===
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // === Swagger UI & OpenAPI docs - SECURED BY SwaggerBasicAuthFilter ===
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/swagger-ui.html",
