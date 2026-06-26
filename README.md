@@ -26,9 +26,12 @@ Dự án Shopping Web này được thiết kế theo **Transaction-Centric Secu
 - 📋 **Order Service**: Transaction Security + Payment Gateway Integration
 - 💳 **Payment Service**: PCI-DSS Compliant + Vault Encryption + HMAC Authentication
 
-### **Frontend (Security-Focused)**
-- ⚛️ **Next.js React App**: Modern UI với Security Headers + Device Fingerprinting
-- 🎨 **Dark Mode/Glassmorphism**: Premium UX với Security-aware Design
+### **Frontend (Security-Focused & Premium UX)**
+- ⚛️ **Next.js React App**: Modern UI với Security Headers + Device Fingerprinting + Tối ưu hóa render phía Server (SSR)
+- 🎨 **Premium UX (Dark Mode/Glassmorphism)**: Thẻ sản phẩm bóng kính mờ, có hiệu ứng bắt sáng viền và phóng to nhẹ khi di chuột qua (`scale-[1.03]`)
+- ⚡ **Chuyển động Dialog Motion (Transitions.dev)**: Thiết kế Modal overlay lơ lửng cho biểu mẫu thêm/sửa sản phẩm với chuyển động đóng/mở mượt mà (`250ms`/`150ms`) và hỗ trợ Accessibility
+- 🏷️ **Category Chips & Search**: Bộ lọc danh mục dạng Tab trực quan kèm icon đại diện cho từng loại thiết bị công nghệ
+- 📸 **Hình ảnh Thực tế (Unsplash Mapping)**: Tự động ánh xạ ảnh demo của Database sang ảnh chất lượng cao thực tế trên Catalog và Cart
 - 🔐 **OAuth2 PKCE**: Secure Authentication Flow
 
 ### **Infrastructure (Production-Ready Security)**

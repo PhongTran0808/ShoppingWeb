@@ -26,7 +26,12 @@ public interface PaymentFeignClient {
         public RequestInterceptor hmacRequestInterceptor() {
             return template -> {
                 String timestamp = String.valueOf(System.currentTimeMillis());
-                String dataToSign = template.path() + timestamp;
+                
+                // Read request body
+                byte[] bodyBytes = template.body();
+                String body = bodyBytes != null ? new String(bodyBytes, StandardCharsets.UTF_8) : "";
+                
+                String dataToSign = template.path() + body + timestamp;
                 
                 String signature = calculateHmac(dataToSign, hmacSecret);
                 template.header("X-Timestamp", timestamp);

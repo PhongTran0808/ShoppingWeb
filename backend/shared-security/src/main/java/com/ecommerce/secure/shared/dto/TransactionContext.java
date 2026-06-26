@@ -17,7 +17,7 @@ public class TransactionContext {
     
     // Basic Transaction Info
     private Long orderId;
-    private Long userId;
+    private String userId;
     private String sessionId;
     private BigDecimal totalAmount;
     private String currency;

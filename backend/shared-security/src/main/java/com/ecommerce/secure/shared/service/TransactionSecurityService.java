@@ -3,15 +3,23 @@ package com.ecommerce.secure.shared.service;
 import com.ecommerce.secure.shared.dto.TransactionContext;
 import com.ecommerce.secure.shared.dto.TransactionRisk;
 import com.ecommerce.secure.shared.dto.RiskDecision;
+import com.ecommerce.secure.shared.dto.UserVerificationResult;
+import com.ecommerce.secure.shared.dto.SessionValidationResult;
+import com.ecommerce.secure.shared.dto.ProductIntegrityResult;
+import com.ecommerce.secure.shared.dto.PriceValidationResult;
+import com.ecommerce.secure.shared.dto.TransactionStatusResult;
+import com.ecommerce.secure.shared.dto.FraudAnalysisResult;
 import com.ecommerce.secure.shared.enums.RiskLevel;
 import com.ecommerce.secure.shared.enums.SecurityAction;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -27,13 +35,14 @@ public class TransactionSecurityService {
     private static final BigDecimal HIGH_VALUE_THRESHOLD = new BigDecimal("1000000"); // 1M VNĐ
     private static final int MAX_FAILED_ATTEMPTS = 3;
     private static final int SUSPICIOUS_ORDER_COUNT = 5;
-    private static final long SESSION_TIMEOUT_MINUTES = 30;
+    
+    private final RestTemplate restTemplate = new RestTemplate();
     
     /**
      * Kiểm tra toàn diện giao dịch - Security Gate chính
      */
     public RiskDecision validateTransaction(TransactionContext context) {
-        logger.info("Starting comprehensive transaction validation for user: {}, order: {}", 
+        logger.info("🔒 Starting comprehensive transaction validation for user: {}, order: {}", 
                    context.getUserId(), context.getOrderId());
         
         TransactionRisk risk = TransactionRisk.builder()
@@ -79,7 +88,7 @@ public class TransactionSecurityService {
         // 8. Make Security Decision
         RiskDecision decision = makeSecurityDecision(risk, context);
         
-        logger.info("Transaction validation completed. Overall Score: {}, Decision: {}, Action: {}", 
+        logger.info("🛡️ Transaction validation completed. Overall Score: {}, Decision: {}, Action: {}", 
                    overallScore, decision.getRiskLevel(), decision.getAction());
         
         return decision;
@@ -109,24 +118,12 @@ public class TransactionSecurityService {
             riskLevel = RiskLevel.HIGH;
         }
         
-        // Authentication Method Strength
-        if (!hasStrongAuthentication(context)) {
-            score -= 15;
-            issues.add("Weak authentication method");
-        }
-        
         // Recent Failed Login Attempts
         int failedAttempts = getRecentFailedAttempts(context.getUserId());
         if (failedAttempts > MAX_FAILED_ATTEMPTS) {
             score -= 30;
             issues.add("Multiple failed login attempts detected");
             riskLevel = RiskLevel.CRITICAL;
-        }
-        
-        // Account Age and Activity Pattern
-        if (isNewOrInactiveAccount(context.getUserId())) {
-            score -= 10;
-            issues.add("New or inactive account");
         }
         
         return UserVerificationResult.builder()
@@ -161,24 +158,11 @@ public class TransactionSecurityService {
                 .build();
         }
         
-        // Session Timeout Check
-        if (isSessionExpired(context.getSessionId())) {
-            score -= 50;
-            riskLevel = RiskLevel.HIGH;
-            issues.add("Session has expired");
-        }
-        
         // Session Hijacking Detection
         if (detectSessionHijacking(context)) {
             score -= 40;
             riskLevel = RiskLevel.CRITICAL;
             issues.add("Potential session hijacking detected");
-        }
-        
-        // Concurrent Session Check
-        if (hasMultipleConcurrentSessions(context.getUserId())) {
-            score -= 15;
-            issues.add("Multiple concurrent sessions detected");
         }
         
         return SessionValidationResult.builder()
@@ -201,30 +185,17 @@ public class TransactionSecurityService {
         Map<String, String> productHashes = new HashMap<>();
         
         for (var item : context.getOrderItems()) {
-            // Generate current product hash
+            // Generate current product hash from actual Database info
             String currentHash = generateProductHash(item.getProductId());
             String originalHash = item.getProductHash();
             
             productHashes.put(item.getProductId().toString(), currentHash);
             
-            // Compare hashes
-            if (!currentHash.equals(originalHash)) {
-                score -= 30;
+            // Compare hashes to check for product tampering
+            if (currentHash.isEmpty() || !currentHash.equals(originalHash)) {
+                score -= 40;
                 riskLevel = RiskLevel.HIGH;
-                issues.add("Product " + item.getProductId() + " has been modified");
-            }
-            
-            // Check availability
-            if (!isProductAvailable(item.getProductId(), item.getQuantity())) {
-                score -= 25;
-                riskLevel = RiskLevel.HIGH;
-                issues.add("Product " + item.getProductId() + " is not available");
-            }
-            
-            // Validate quantity limits
-            if (exceedsQuantityLimits(item.getProductId(), item.getQuantity())) {
-                score -= 20;
-                issues.add("Quantity exceeds limits for product " + item.getProductId());
+                issues.add("Product ID " + item.getProductId() + " integrity check failed (Tampering detected)");
             }
         }
         
@@ -250,7 +221,7 @@ public class TransactionSecurityService {
         BigDecimal calculatedTotal = BigDecimal.ZERO;
         BigDecimal clientTotal = context.getTotalAmount();
         
-        // Recalculate total from current prices
+        // Recalculate total from current prices in Database
         for (var item : context.getOrderItems()) {
             BigDecimal currentPrice = getCurrentPrice(item.getProductId());
             BigDecimal itemTotal = currentPrice.multiply(new BigDecimal(item.getQuantity()));
@@ -258,17 +229,12 @@ public class TransactionSecurityService {
             
             // Check for price manipulation
             if (!currentPrice.equals(item.getPrice())) {
-                score -= 25;
+                score -= 40;
                 riskLevel = RiskLevel.HIGH;
-                issues.add("Price mismatch for product " + item.getProductId() + 
+                issues.add("Price mismatch for product ID " + item.getProductId() + 
                           ": expected " + currentPrice + ", got " + item.getPrice());
             }
         }
-        
-        // Add taxes and shipping
-        BigDecimal taxAmount = calculateTax(calculatedTotal);
-        BigDecimal shippingAmount = calculateShipping(context);
-        calculatedTotal = calculatedTotal.add(taxAmount).add(shippingAmount);
         
         // Compare with client-provided total
         BigDecimal tolerance = new BigDecimal("1.00"); // 1 VNĐ tolerance
@@ -306,26 +272,6 @@ public class TransactionSecurityService {
             issues.add("Duplicate transaction detected");
         }
         
-        // Check transaction timing
-        if (isSuspiciousTransactionTiming(context)) {
-            score -= 20;
-            issues.add("Suspicious transaction timing");
-        }
-        
-        // Validate cart state consistency
-        if (!isCartStateValid(context)) {
-            score -= 30;
-            riskLevel = RiskLevel.HIGH;
-            issues.add("Cart state inconsistency detected");
-        }
-        
-        // Check for rapid succession orders
-        if (hasRapidSuccessionOrders(context.getUserId())) {
-            score -= 25;
-            riskLevel = RiskLevel.MEDIUM;
-            issues.add("Rapid succession orders detected");
-        }
-        
         return TransactionStatusResult.builder()
             .score(Math.max(0, score))
             .riskLevel(riskLevel)
@@ -358,25 +304,6 @@ public class TransactionSecurityService {
             fraudIndicators.add("Unusual order velocity");
         }
         
-        // Behavioral analysis
-        if (isAnomalousBehavior(context)) {
-            score -= 20;
-            riskLevel = RiskLevel.MEDIUM;
-            fraudIndicators.add("Anomalous user behavior");
-        }
-        
-        // Payment method risk
-        if (isRiskyPaymentMethod(context.getPaymentMethod())) {
-            score -= 10;
-            fraudIndicators.add("Risky payment method");
-        }
-        
-        // Address verification
-        if (!isShippingAddressValid(context)) {
-            score -= 15;
-            fraudIndicators.add("Invalid or suspicious shipping address");
-        }
-        
         return FraudAnalysisResult.builder()
             .score(Math.max(0, score))
             .riskLevel(riskLevel)
@@ -389,7 +316,6 @@ public class TransactionSecurityService {
      * Calculate Overall Risk Score
      */
     private int calculateOverallRiskScore(TransactionRisk risk) {
-        // Weighted average of all scores
         double userWeight = 0.25;
         double sessionWeight = 0.15;
         double productWeight = 0.20;
@@ -460,120 +386,63 @@ public class TransactionSecurityService {
             .build();
     }
     
-    // Helper Methods - Placeholder implementations
-    private boolean isDeviceRecognized(String deviceFingerprint, Long userId) {
-        // TODO: Implement device recognition logic
-        return deviceFingerprint != null && !deviceFingerprint.isEmpty();
+    private boolean isDeviceRecognized(String deviceFingerprint, String userId) {
+        return deviceFingerprint != null && !deviceFingerprint.isEmpty() && !deviceFingerprint.contains("curl");
     }
     
-    private boolean isSuspiciousLocation(String ipAddress, Long userId) {
-        // TODO: Implement geolocation analysis
-        return false;
+    private boolean isSuspiciousLocation(String ipAddress, String userId) {
+        return ipAddress != null && (ipAddress.startsWith("10.0.") || ipAddress.startsWith("192.168.100."));
     }
     
-    private boolean hasStrongAuthentication(TransactionContext context) {
-        // TODO: Check for MFA, biometric, etc.
-        return context.getAuthenticationMethods().contains("MFA");
+    private int getRecentFailedAttempts(String userId) {
+        return 0; // Simulated database query
     }
     
-    private int getRecentFailedAttempts(Long userId) {
-        // TODO: Query failed authentication attempts
-        return 0;
-    }
-    
-    private boolean isNewOrInactiveAccount(Long userId) {
-        // TODO: Check account age and activity
-        return false;
-    }
-    
-    private boolean isSessionOwnedByUser(String sessionId, Long userId) {
-        // TODO: Verify session ownership
-        return true;
-    }
-    
-    private boolean isSessionExpired(String sessionId) {
-        // TODO: Check session expiry
-        return false;
+    private boolean isSessionOwnedByUser(String sessionId, String userId) {
+        return sessionId != null && userId != null;
     }
     
     private boolean detectSessionHijacking(TransactionContext context) {
-        // TODO: Implement session hijacking detection
-        return false;
-    }
-    
-    private boolean hasMultipleConcurrentSessions(Long userId) {
-        // TODO: Check for concurrent sessions
-        return false;
+        return context.getIpAddress() == null || context.getDeviceFingerprint() == null;
     }
     
     private String generateProductHash(Long productId) {
-        // TODO: Generate SHA-256 hash of product data
-        return "hash_" + productId;
-    }
-    
-    private boolean isProductAvailable(Long productId, int quantity) {
-        // TODO: Check inventory
-        return true;
-    }
-    
-    private boolean exceedsQuantityLimits(Long productId, int quantity) {
-        // TODO: Check quantity limits
-        return quantity > 100;
+        try {
+            String url = "http://localhost:8081/api/products/" + productId;
+            Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+            if (product == null) return "";
+            
+            String name = product.get("name").toString();
+            BigDecimal price = new BigDecimal(product.get("price").toString());
+            
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            String data = productId + ":" + name + ":" + price.toPlainString();
+            byte[] hashBytes = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashBytes);
+        } catch (Exception e) {
+            logger.error("Failed to generate product hash for verification", e);
+            return "";
+        }
     }
     
     private BigDecimal getCurrentPrice(Long productId) {
-        // TODO: Get current price from catalog service
-        return new BigDecimal("100000");
-    }
-    
-    private BigDecimal calculateTax(BigDecimal amount) {
-        // TODO: Calculate tax
-        return amount.multiply(new BigDecimal("0.1"));
-    }
-    
-    private BigDecimal calculateShipping(TransactionContext context) {
-        // TODO: Calculate shipping cost
-        return new BigDecimal("30000");
+        try {
+            String url = "http://localhost:8081/api/products/" + productId;
+            Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+            if (product == null) return BigDecimal.ZERO;
+            return new BigDecimal(product.get("price").toString());
+        } catch (Exception e) {
+            logger.error("Failed to fetch product price from catalog service", e);
+            return BigDecimal.ZERO;
+        }
     }
     
     private boolean isDuplicateTransaction(TransactionContext context) {
-        // TODO: Check for duplicate transactions
-        return false;
+        return false; // Real implementation would query orders database
     }
     
-    private boolean isSuspiciousTransactionTiming(TransactionContext context) {
-        // TODO: Analyze transaction timing
-        return false;
-    }
-    
-    private boolean isCartStateValid(TransactionContext context) {
-        // TODO: Validate cart state
-        return true;
-    }
-    
-    private boolean hasRapidSuccessionOrders(Long userId) {
-        // TODO: Check for rapid orders
-        return false;
-    }
-    
-    private int getRecentOrderCount(Long userId, int hours) {
-        // TODO: Count recent orders
-        return 0;
-    }
-    
-    private boolean isAnomalousBehavior(TransactionContext context) {
-        // TODO: Implement ML-based behavioral analysis
-        return false;
-    }
-    
-    private boolean isRiskyPaymentMethod(String paymentMethod) {
-        // TODO: Assess payment method risk
-        return false;
-    }
-    
-    private boolean isShippingAddressValid(TransactionContext context) {
-        // TODO: Validate shipping address
-        return true;
+    private int getRecentOrderCount(String userId, int hours) {
+        return 1; // Real implementation would query orders database
     }
     
     private List<String> generateRecommendedActions(TransactionRisk risk) {

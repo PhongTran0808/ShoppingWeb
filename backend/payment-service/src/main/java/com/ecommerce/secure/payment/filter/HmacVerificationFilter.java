@@ -24,9 +24,14 @@ public class HmacVerificationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
+        HttpServletRequest requestToProcess = request;
+
         if ("POST".equalsIgnoreCase(request.getMethod()) && request.getRequestURI().startsWith("/api/payments")) {
-            String signature = request.getHeader("X-Signature");
-            String timestamp = request.getHeader("X-Timestamp");
+            CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+            requestToProcess = cachedRequest;
+
+            String signature = cachedRequest.getHeader("X-Signature");
+            String timestamp = cachedRequest.getHeader("X-Timestamp");
 
             if (signature == null || timestamp == null) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing HMAC Signature or Timestamp");
@@ -41,9 +46,9 @@ public class HmacVerificationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Xác thực toàn vẹn bằng cách băm lại dữ liệu URI + Timestamp
-            // Ghi chú: Trong thực tế nên dùng ContentCachingRequestWrapper để băm cả body JSON.
-            String dataToSign = request.getRequestURI() + timestamp;
+            // Xác thực toàn vẹn bằng cách băm lại dữ liệu URI + Request Body + Timestamp
+            String body = new String(cachedRequest.getCachedBody(), StandardCharsets.UTF_8);
+            String dataToSign = cachedRequest.getRequestURI() + body + timestamp;
             String calculatedSignature = calculateHmac(dataToSign, hmacSecret);
 
             if (!calculatedSignature.equals(signature)) {
@@ -52,7 +57,7 @@ public class HmacVerificationFilter extends OncePerRequestFilter {
             }
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(requestToProcess, response);
     }
 
     private String calculateHmac(String data, String key) {

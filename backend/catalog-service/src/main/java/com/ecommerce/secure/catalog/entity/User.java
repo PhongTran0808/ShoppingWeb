@@ -12,6 +12,8 @@ public class User {
     private String role;
     @Column(name = "is_active")
     private Boolean isActive;
+    @Column(name = "password_hash")
+    private String passwordHash;
     
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -23,4 +25,6 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 }

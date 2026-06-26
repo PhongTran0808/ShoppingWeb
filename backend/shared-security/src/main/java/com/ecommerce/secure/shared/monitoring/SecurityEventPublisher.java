@@ -3,11 +3,15 @@ package com.ecommerce.secure.shared.monitoring;
 import com.ecommerce.secure.shared.dto.RiskDecision;
 import com.ecommerce.secure.shared.dto.TransactionContext;
 import com.ecommerce.secure.shared.enums.RiskLevel;
+import com.ecommerce.secure.shared.enums.AuthenticationEventType;
+import com.ecommerce.secure.shared.enums.PaymentEventType;
+import com.ecommerce.secure.shared.enums.SecurityEventType;
+import com.ecommerce.secure.shared.enums.SecuritySeverity;
+import com.ecommerce.secure.shared.enums.SecurityAlertType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -25,7 +29,6 @@ import java.util.UUID;
 public class SecurityEventPublisher {
     
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final SecurityMetricsCollector metricsCollector;
     
     @Value("${security.monitoring.kafka.topic:security-events}")
@@ -172,9 +175,6 @@ public class SecurityEventPublisher {
             // Publish to Spring Application Events
             applicationEventPublisher.publishEvent(event);
             
-            // Publish to Kafka for distributed processing
-            kafkaTemplate.send(securityEventsTopic, event.getEventId(), event);
-            
             // Store in security audit log
             storeSecurityAuditLog(event);
             
@@ -269,9 +269,6 @@ public class SecurityEventPublisher {
      */
     private void publishAlert(SecurityAlert alert) {
         try {
-            // Send to alert topic
-            kafkaTemplate.send(securityAlertsTopic, alert.getAlertId(), alert);
-            
             // Store alert in database
             storeSecurityAlert(alert);
             

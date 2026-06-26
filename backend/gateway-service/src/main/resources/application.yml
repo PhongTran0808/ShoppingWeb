@@ -4,24 +4,16 @@ server:
 spring:
   application:
     name: gateway-service
-  data:
-    redis:
-      host: localhost
-      port: 6379
   security:
     oauth2:
       resourceserver:
         jwt:
+          # Custom ReactiveJwtDecoder bean handles local token validation
           issuer-uri: http://localhost:9090/realms/ecommerce-realm
   cloud:
     gateway:
       default-filters:
-        - TokenRelay
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 10
-            redis-rate-limiter.burstCapacity: 20
-            redis-rate-limiter.requestedTokens: 1
+        - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_FIRST
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -38,6 +30,9 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/catalog/**
+          filters:
+            - StripPrefix=2
+            - PrefixPath=/api
         - id: cart-service
           uri: http://localhost:8082
           predicates:

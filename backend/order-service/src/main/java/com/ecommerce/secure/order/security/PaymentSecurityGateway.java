@@ -315,12 +315,12 @@ public class PaymentSecurityGateway {
         }
     }
     
-    private boolean verifySmsOtp(String code, Long userId) {
+    private boolean verifySmsOtp(String code, String userId) {
         // TODO: Implement SMS OTP verification
         return "123456".equals(code); // Mock implementation
     }
     
-    private boolean verifyEmailConfirmation(String code, Long userId) {
+    private boolean verifyEmailConfirmation(String code, String userId) {
         // TODO: Implement email confirmation
         return code != null && code.length() == 6;
     }
@@ -363,7 +363,7 @@ public class PaymentSecurityGateway {
     @lombok.Builder
     private static class PendingAuthentication {
         private String token;
-        private Long userId;
+        private String userId;
         private Long orderId;
         private String authMethod;
         private Instant createdAt;
