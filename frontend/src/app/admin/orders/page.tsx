@@ -9,39 +9,58 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Lấy dữ liệu đơn hàng từ "Database" (LocalStorage)
-    const savedOrders = localStorage.getItem("vault_orders");
-    if (savedOrders) {
-      setOrders(JSON.parse(savedOrders).reverse());
-    }
+    // Lấy dữ liệu đơn hàng từ Backend API
+    const token = localStorage.getItem("vault_token") || "";
+    fetch("http://localhost:8083/api/orders/all", {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("API error");
+        return res.json();
+      })
+      .then(data => {
+        setOrders(data.reverse());
+      })
+      .catch(err => {
+        console.error("Lỗi lấy đơn hàng:", err);
+      });
   }, []);
 
   const filteredOrders = orders.filter((order) => {
     const term = searchTerm.toLowerCase();
     return (
-      order.id.toLowerCase().includes(term) ||
-      order.shippingInfo?.fullName?.toLowerCase().includes(term) ||
-      order.shippingInfo?.phone?.includes(term)
+    return (
+      order.id.toString().toLowerCase().includes(term) ||
+      (order.trackingNumber && order.trackingNumber.toLowerCase().includes(term))
     );
   });
 
-  const handleVerifyOrder = (orderId: string) => {
-    const updatedOrders = orders.map(order => {
-      if (order.id === orderId) {
-        return {
-          ...order,
-          status: "SUCCESS",
-          admin_verified: true
-        };
+  const handleVerifyOrder = async (orderId: string) => {
+    const token = localStorage.getItem("vault_token") || "";
+    try {
+      const res = await fetch(`http://localhost:8083/api/orders/${orderId}/status?status=SUCCESS`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const updatedOrders = orders.map(order => {
+          if (order.id === orderId) {
+            return {
+              ...order,
+              status: "SUCCESS",
+              admin_verified: true
+            };
+          }
+          return order;
+        });
+        setOrders(updatedOrders);
       }
-      return order;
-    });
-    setOrders(updatedOrders);
-    // Lưu ngược lại mảng theo thứ tự cũ (vì display đang reverse)
-    localStorage.setItem("vault_orders", JSON.stringify([...updatedOrders].reverse()));
+    } catch (e) {
+      console.error("Lỗi duyệt đơn hàng", e);
+    }
   };
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
   return (
     <div className="space-y-6">

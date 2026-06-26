@@ -72,6 +72,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Order>> getAllOrders(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Order> getOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         String userId = jwt.getSubject();

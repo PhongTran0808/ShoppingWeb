@@ -26,43 +26,29 @@ export default function RegisterPage() {
     setErrorMsg("");
 
     try {
-      // 1. Lấy thông tin user hiện tại từ LocalStorage (Giả lập Database)
-      const existingUsers = JSON.parse(localStorage.getItem("vault_db_users") || "[]");
-      
-      if (existingUsers.find((u: any) => u.username === username)) {
-        setErrorMsg("Tên đăng nhập đã tồn tại!");
+      const res = await fetch("http://localhost:8081/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem("vault_token", data.token);
+        localStorage.setItem("vault_user", JSON.stringify(data.user));
+
+        setAuthStatus("success");
+        setTimeout(() => {
+          router.push("/catalog");
+        }, 1000);
+      } else {
+        setErrorMsg(data.message || "Đăng ký thất bại!");
         setAuthStatus("idle");
-        return;
       }
-
-      // 2. Tạo Session Token BẰNG MẬT MÃ HỌC SHA-256 (Kế hoạch Mới)
-      const sessionToken = await generateSecureSessionToken(username, password);
-
-      // 3. Mã hóa Master Password (lưu Hash vào "DB")
-      const passwordHash = await sha256(password);
-
-      // 4. Lưu User vào "Database"
-      const newUser = {
-        username,
-        email,
-        passwordHash,
-        token: sessionToken,
-        role: "ROLE_USER"
-      };
-      
-      existingUsers.push(newUser);
-      localStorage.setItem("vault_db_users", JSON.stringify(existingUsers));
-      localStorage.setItem("vault_token", sessionToken);
-      localStorage.setItem("vault_user", JSON.stringify({ username, role: "ROLE_USER" }));
-
-      // 5. Chuyển hướng
-      setAuthStatus("success");
-      setTimeout(() => {
-        router.push("/catalog");
-      }, 1000);
     } catch (error) {
-      console.error("Lỗi mật mã học:", error);
-      setErrorMsg("Trình duyệt không hỗ trợ Web Crypto API!");
+      console.error("Lỗi kết nối:", error);
+      setErrorMsg("Lỗi kết nối đến Backend Server!");
       setAuthStatus("idle");
     }
   };

@@ -61,7 +61,7 @@ export default function AdminDashboard() {
           transition={{ duration: 0.4 }}
           className="p-6 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-sm shadow-xl relative overflow-hidden group"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-indigo-400" />
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             Tổng Doanh Thu
             {!isDecrypted && <Unlock className="w-3 h-3 cursor-pointer text-indigo-400 hover:text-white transition-colors" onClick={handleDecrypt} title="Yêu cầu giải mã dữ liệu thực" />}
           </h3>
-          <div className="flex flex-col">
+          <div className="flex flex-col relative z-10">
             <p className="text-3xl font-bold text-white tracking-tight">{realRevenue}</p>
             {errorMsg && (
               <p className="text-rose-400 text-xs mt-2 bg-rose-500/10 px-2 py-1 rounded-md">{errorMsg}</p>
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
             {!isDecrypted && (
               <button 
                 onClick={handleDecrypt}
-                className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.4)] transition-all w-full"
+                className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.4)] transition-all w-full relative z-20 cursor-pointer"
               >
                 <Unlock className="w-4 h-4" /> Bấm để Giải mã Dữ liệu
               </button>
@@ -122,8 +122,7 @@ export default function AdminDashboard() {
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
             Biểu đồ Doanh Thu <span className="text-xs font-normal bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-md">HMAC Verified</span>
           </h3>
-          <div className="flex-1 w-full relative min-h-[250px]">
-            <div className="absolute inset-0">
+          <div className="flex-1 w-full h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
@@ -137,7 +136,6 @@ export default function AdminDashboard() {
                   <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
           </div>
         </motion.div>
 
@@ -148,8 +146,7 @@ export default function AdminDashboard() {
           className="p-8 rounded-3xl bg-white/[0.03] border border-white/5 shadow-xl flex flex-col min-h-[350px]"
         >
           <h3 className="text-lg font-bold mb-6">Trạng thái Tải Hệ Thống KMS</h3>
-          <div className="flex-1 w-full relative min-h-[150px]">
-             <div className="absolute inset-0">
+          <div className="flex-1 w-full h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trafficData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
@@ -160,7 +157,6 @@ export default function AdminDashboard() {
                   <Line type="monotone" dataKey="load" stroke="#34d399" strokeWidth={3} dot={{ r: 4, fill: '#34d399', strokeWidth: 2, stroke: '#000' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
           </div>
           <div className="mt-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />

@@ -69,29 +69,72 @@ export default function CheckoutPage() {
     }, 1500);
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     setStatus("processing");
-    setTimeout(() => {
-      // Lưu đơn hàng chờ duyệt
-      const newOrder = {
-        id: orderId,
-        date: new Date().toISOString(),
-        items: cartItems,
-        total: total,
-        status: "PENDING_VERIFICATION", // Chờ xác nhận thủ công từ Admin
-        admin_verified: false,
-        payment_method: "VIETQR",
-        shippingInfo: { fullName, phone, address }
+    const token = localStorage.getItem("vault_token");
+    
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      // 1. Sync cart to backend first
+      for (const item of cartItems) {
+        await fetch("http://localhost:8082/api/cart/items", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+          },
+          body: JSON.stringify({ productId: item.id, quantity: item.quantity })
+        });
+      }
+
+      // 2. Create Order via API
+      const payload = {
+        shippingAddress: address,
+        phoneNumber: phone
       };
 
-      const existingOrders = JSON.parse(localStorage.getItem("vault_orders") || "[]");
-      existingOrders.push(newOrder);
-      localStorage.setItem("vault_orders", JSON.stringify(existingOrders));
+      const res = await fetch("http://localhost:8083/api/orders", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
 
-      localStorage.removeItem("vault_cart");
-      setCartItems([]);
-      setStatus("success");
-    }, 1000);
+      if (res.ok) {
+        const orderData = await res.json();
+        
+        // 3. Create Payment Transaction
+        await fetch("http://localhost:8084/api/payments", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            orderId: orderData.orderId,
+            paymentToken: "VIETQR_" + Date.now(),
+            paymentMethod: "VIETQR"
+          })
+        });
+
+        localStorage.removeItem("vault_cart");
+        setCartItems([]);
+        setStatus("success");
+      } else {
+        const errData = await res.text();
+        console.error("Order creation failed:", errData);
+        setStatus("idle");
+      }
+    } catch (e) {
+      console.error("Lỗi gọi API thanh toán", e);
+      setStatus("idle");
+    }
   };
 
   if (showQR && status !== "success") {

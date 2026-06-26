@@ -8,15 +8,18 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Đọc danh sách sản phẩm từ Spring Boot Backend API (MySQL Database)
+    // Luôn ưu tiên đọc từ MySQL Backend API
     fetch("http://localhost:8081/api/products")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Backend not available");
+        return res.json();
+      })
       .then(data => {
         setProducts(data);
+        localStorage.setItem("vault_admin_products", JSON.stringify(data));
       })
       .catch(err => {
         console.error("Lỗi lấy sản phẩm từ Backend, dùng Mock:", err);
-        // Đọc từ LocalStorage trước
         const stored = localStorage.getItem("vault_admin_products");
         if (stored) {
           setProducts(JSON.parse(stored));
@@ -37,29 +40,104 @@ export default function AdminProductsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editId, setEditId] = useState<number | null>(null);
 
-  const handleAddSubmit = () => {
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const openEditModal = (product: any) => {
+    setEditId(product.id);
+    setNewProductName(product.name);
+    setNewProductPrice(product.price.toString());
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddSubmit = async () => {
     if (!newProductName.trim()) return;
     const price = parseInt(newProductPrice) || 0;
-    const newProduct = {
-      id: Date.now(),
+    
+    const token = localStorage.getItem("vault_token") || "";
+    const productPayload = {
       name: newProductName,
       price,
       category: "Mới",
-      stock: 100
+      stock: 100,
+      isActive: true
     };
-    const newProducts = [...products, newProduct];
-    setProducts(newProducts);
+
+    try {
+      if (editId !== null) {
+        // Cập nhật (PUT) vào MySQL
+        const res = await fetch(`http://localhost:8081/api/products/${editId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify(productPayload)
+        });
+        if (res.ok) {
+          const updatedProduct = await res.json();
+          const newProducts = products.map(p => p.id === editId ? updatedProduct : p);
+          setProducts(newProducts);
+          localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+        } else {
+          // Fallback lưu local nếu API lỗi
+          const newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price } : p);
+          setProducts(newProducts);
+          localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+        }
+      } else {
+        // Thêm mới (POST) vào MySQL
+        const res = await fetch("http://localhost:8081/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify(productPayload)
+        });
+        if (res.ok) {
+          const newProduct = await res.json();
+          const newProducts = [...products, newProduct];
+          setProducts(newProducts);
+          localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+        } else {
+          // Fallback lưu local nếu API lỗi
+          const newProductFallback = { id: Date.now(), ...productPayload };
+          const newProducts = [...products, newProductFallback];
+          setProducts(newProducts);
+          localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi API, lưu tạm vào Local Storage", e);
+      // Fallback
+      let newProducts;
+      if (editId !== null) {
+        newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price } : p);
+      } else {
+        newProducts = [...products, { id: Date.now(), ...productPayload }];
+      }
+      setProducts(newProducts);
+      localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+    }
+    
     setIsAddModalOpen(false);
     setNewProductName("");
     setNewProductPrice("");
-    
-    // Fallback sync to local storage just in case
-    localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
+    setEditId(null);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteConfirmId === null) return;
+    const token = localStorage.getItem("vault_token") || "";
+
+    try {
+      // Xóa mềm (DELETE) trên MySQL
+      const res = await fetch(`http://localhost:8081/api/products/${deleteConfirmId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      // Bất kể thành công hay không, cũng cập nhật UI
+    } catch (e) {
+      console.error("Lỗi API xóa", e);
+    }
+
     const newProducts = products.filter(p => p.id !== deleteConfirmId);
     setProducts(newProducts);
     localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
@@ -75,7 +153,12 @@ export default function AdminProductsPage() {
           </h2>
           <p className="text-zinc-400 mt-1">Thêm, sửa, xóa danh mục hàng hóa an toàn.</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg">
+        <Button onClick={() => {
+          setEditId(null);
+          setNewProductName("");
+          setNewProductPrice("");
+          setIsAddModalOpen(true);
+        }} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg">
           <Plus className="w-4 h-4 mr-2" /> Thêm Sản phẩm
         </Button>
       </div>
@@ -87,6 +170,8 @@ export default function AdminProductsPage() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input 
               type="text" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm kiếm mã hóa..." 
               className="w-full bg-black/50 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
             />
@@ -105,7 +190,7 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <tr key={product.id} className="hover:bg-white/[0.02] transition-colors">
                 <td className="px-6 py-4">#{product.id.toString().slice(0, 4)}</td>
                 <td className="px-6 py-4 font-medium text-white">{product.name}</td>
@@ -118,7 +203,12 @@ export default function AdminProductsPage() {
                 <td className="px-6 py-4">{product.stock}</td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10">
+                    <Button 
+                      onClick={() => openEditModal(product)}
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
+                    >
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button 
@@ -133,7 +223,7 @@ export default function AdminProductsPage() {
                 </td>
               </tr>
             ))}
-            {products.length === 0 && (
+            {filteredProducts.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
                   Chưa có sản phẩm nào.
@@ -148,7 +238,7 @@ export default function AdminProductsPage() {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-4">Thêm Sản phẩm mới</h3>
+            <h3 className="text-xl font-bold text-white mb-4">{editId ? "Chỉnh sửa Sản phẩm" : "Thêm Sản phẩm mới"}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-1">Tên sản phẩm</label>

@@ -14,16 +14,16 @@ export default function AdminUsersPage() {
   useEffect(() => {
     // Gọi API thật từ Spring Boot (identity/catalog service)
     fetch("http://localhost:8081/api/users")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Backend not available");
+        return res.json();
+      })
       .then(data => {
         setUsers(data);
         setLoading(false);
-      })
       .catch(err => {
-        console.error("Failed to fetch users:", err);
-        // Tạm thời fallback nếu backend chưa chạy
-        const fallback = JSON.parse(localStorage.getItem("vault_db_users") || "[]");
-        setUsers(fallback.map((u: any, i: number) => ({...u, id: `UUID-${i}`, isActive: true})));
+        setErrorMsg("Lỗi khi tải danh sách từ cơ sở dữ liệu: " + err.message);
+        setUsers([]);
         setLoading(false);
       });
   }, []);

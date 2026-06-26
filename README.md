@@ -56,11 +56,12 @@ Dự án Shopping Web này được thiết kế theo **Transaction-Centric Secu
    127.0.0.1       tienthienvienman.site.je
    ```
 
-### Bước 2: Khởi động Backend (Spring Boot)
-1. Mở thư mục gốc của dự án.
-2. Double-click vào file **`run_backend.bat`**.
-3. *Lưu ý:* Lần đầu chạy, Maven sẽ mất 1-2 phút để tải dependencies. Hãy chờ đến khi cửa sổ hiện dòng `Started CatalogApplication`.
-4. 📋 **Swagger API UI:** [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
+### Bước 2: Khởi động Backend (Spring Boot Microservices & Vault)
+1. Mở PowerShell (hoặc Terminal) ở thư mục gốc của dự án.
+2. Chạy lệnh: **`.\start-all.ps1`**
+3. *Lưu ý:* Lệnh này sẽ tự động khởi động HashiCorp Vault và toàn bộ 5 dịch vụ Spring Boot (Gateway, Catalog, Cart, Order, Payment) trong các cửa sổ mới.
+4. Hãy chờ khoảng 1-2 phút để tất cả dịch vụ kết nối Database và chạy hoàn tất.
+5. 📋 **Swagger API UI (Catalog):** [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
 
 ### Bước 3: Khởi động Frontend & Apache HTTPS
 1. Ở thư mục gốc của dự án, double-click vào file **`run_frontend.bat`**.

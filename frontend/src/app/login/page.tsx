@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Lock, User, ChevronLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { generateSecureSessionToken } from "@/utils/crypto";
+import { generateSecureSessionToken, sha256 } from "@/utils/crypto";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -24,29 +24,31 @@ export default function LoginPage() {
       setAuthStatus("authenticating");
       setErrorMsg("");
 
-      // Sinh Session Token bảo mật
-      const secureToken = await generateSecureSessionToken(username, password);
+      const res = await fetch("http://localhost:8081/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
 
-      setTimeout(() => {
-        // Giả lập check DB (Thực tế backend sẽ verify cái này)
-        const isRootAdmin = username === "admin_root";
-        
-        // Lưu Secure Token
-        localStorage.setItem("vault_token", secureToken);
-        localStorage.setItem("vault_user", JSON.stringify({ 
-          username, 
-          role: isRootAdmin ? "ROLE_ADMIN" : "ROLE_USER" 
-        }));
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem("vault_token", data.token);
+        localStorage.setItem("vault_user", JSON.stringify(data.user));
         
         setAuthStatus("success");
         
         setTimeout(() => {
-          window.location.href = isRootAdmin ? "/admin" : "/catalog";
+          const role = data.user.role || "";
+          window.location.href = role === "ROLE_ADMIN" ? "/admin" : "/catalog";
         }, 1500);
-      }, 1500);
+      } else {
+        setErrorMsg(data.message || "Đăng nhập thất bại!");
+        setAuthStatus("idle");
+      }
     } catch (err: any) {
       console.error("Lỗi đăng nhập:", err);
-      setErrorMsg("Lỗi hệ thống: " + (err.message || "Không thể xử lý dữ liệu!"));
+      setErrorMsg("Lỗi kết nối đến Backend Server!");
       setAuthStatus("idle");
     }
   };

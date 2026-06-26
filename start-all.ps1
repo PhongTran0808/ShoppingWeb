@@ -3,6 +3,11 @@ Write-Host " KÍCH HOẠT HỆ THỐNG E-COMMERCE TỰ ĐỘNG "
 Write-Host "=============================================="
 Write-Host ""
 
+# Ensure we use JDK 17 to avoid Lombok compatibility issues with JDK 25
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+Write-Host "-> Đã thiết lập JAVA_HOME = $env:JAVA_HOME"
+Write-Host ""
 Write-Host "[1/3] Đang khởi động HashiCorp Vault (KMS)..."
 # Tắt vault cũ nếu đang chạy
 Stop-Process -Name "vault" -ErrorAction SilentlyContinue
