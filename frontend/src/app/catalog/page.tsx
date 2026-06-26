@@ -51,10 +51,20 @@ export default function CatalogPage() {
     fetch("http://localhost:8081/api/products")
       .then(res => res.json())
       .then(data => {
+        let items = [];
         if (data && data.content && Array.isArray(data.content)) {
-          setProducts(data.content);
+          items = data.content;
         } else if (Array.isArray(data)) {
-          setProducts(data);
+          items = data;
+        }
+        
+        if (items.length > 0) {
+          // Map categoryId (backend) sang category string (frontend)
+          const mappedItems = items.map((p: any) => ({
+            ...p,
+            category: p.category || (p.categoryId === 1 ? 'Smartphone' : p.categoryId === 2 ? 'Laptop' : 'Accessories')
+          }));
+          setProducts(mappedItems);
         }
       })
       .catch(() => {
@@ -84,8 +94,8 @@ export default function CatalogPage() {
     }, 3000);
   };
 
-  // Lấy danh sách category duy nhất
-  const categories = ["All", ...Array.from(new Set(products.map((p: any) => p.category)))];
+  // Lấy danh sách category duy nhất và loại bỏ các giá trị undefined/rỗng
+  const categories = ["All", ...Array.from(new Set(products.map((p: any) => p.category)))].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#05050A] text-white relative">
