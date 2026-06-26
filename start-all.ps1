@@ -35,14 +35,15 @@ if ($tokenMatch) {
     exit
 }
 
-Write-Host "[3/3] Đang khởi động 5 Microservices Spring Boot..."
-Start-Process cmd -ArgumentList "/c title Gateway Service (8080) && cd backend\gateway-service && mvn spring-boot:run"
-Start-Process cmd -ArgumentList "/c title Catalog Service (8081) && cd backend\catalog-service && mvn spring-boot:run"
-Start-Process cmd -ArgumentList "/c title Cart Service (8082) && cd backend\cart-service && mvn spring-boot:run"
-Start-Process cmd -ArgumentList "/c title Order Service (8083) && cd backend\order-service && mvn spring-boot:run"
-Start-Process cmd -ArgumentList "/c title Payment Service (8084) && cd backend\payment-service && mvn spring-boot:run"
+Write-Host "[3/3] Đang khởi động 5 Microservices Spring Boot (Chế độ siêu nhẹ giảm lag)..."
+Start-Process cmd -ArgumentList "/c title Gateway Service (8080) && java -jar backend\gateway-service\target\gateway-service-1.0.0-SNAPSHOT.jar"
+Start-Process cmd -ArgumentList "/c title Catalog Service (8081) && java -jar backend\catalog-service\target\catalog-service-1.0.0-SNAPSHOT.jar"
+Start-Process cmd -ArgumentList "/c title Cart Service (8082) && java -jar backend\cart-service\target\cart-service-1.0.0-SNAPSHOT.jar"
+Start-Process cmd -ArgumentList "/c title Order Service (8083) && java -jar backend\order-service\target\order-service-1.0.0-SNAPSHOT.jar"
+Start-Process cmd -ArgumentList "/c title Payment Service (8084) && java -jar backend\payment-service\target\payment-service-1.0.0-SNAPSHOT.jar"
 
 Write-Host "=============================================="
-Write-Host "HOÀN TẤT! 5 cửa sổ Terminal đang được mở để chạy Code."
-Write-Host "Vui lòng đợi khoảng 1-2 phút để chúng kết nối Database xong."
+Write-Host "HOÀN TẤT! 5 cửa sổ Terminal đang được mở để chạy Code (bằng file .jar nguyên bản)."
+Write-Host "Vui lòng đợi khoảng 30-60 giây để chúng khởi động xong."
+Write-Host "Hãy vào bằng link: http://localhost:3000 (KHÔNG vào tên miền tienthienvienman.site.je)"
 Write-Host "=============================================="
