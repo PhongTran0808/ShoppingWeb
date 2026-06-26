@@ -21,6 +21,7 @@ export default function AdminUsersPage() {
       .then(data => {
         setUsers(data);
         setLoading(false);
+      })
       .catch(err => {
         setErrorMsg("Lỗi khi tải danh sách từ cơ sở dữ liệu: " + err.message);
         setUsers([]);

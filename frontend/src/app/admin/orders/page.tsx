@@ -29,7 +29,6 @@ export default function AdminOrdersPage() {
   const filteredOrders = orders.filter((order) => {
     const term = searchTerm.toLowerCase();
     return (
-    return (
       order.id.toString().toLowerCase().includes(term) ||
       (order.trackingNumber && order.trackingNumber.toLowerCase().includes(term))
     );
