@@ -66,7 +66,9 @@ export default function AdminProductsPage() {
     const productPayload = {
       name: newProductName,
       price,
-      category: "Mới",
+      categoryId: 1, // Mặc định là danh mục 1
+      category: "Mới", // Giữ lại dự phòng cho logic Frontend cũ nếu có
+      slug: newProductName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now(),
       stock: 100,
       isActive: true
     };
