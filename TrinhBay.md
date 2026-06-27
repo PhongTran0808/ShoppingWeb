@@ -1,8 +1,5 @@
 ﻿# TÀI LIỆU TRÌNH BÀY ĐỒ ÁN
 ## Thiết kế, Triển khai & Đánh giá An toàn Mật mã cho Hệ thống Thương mại Điện tử
-**Môn:** NT219 - Mật mã Ứng dụng (Cryptography) — HCMUTE  
-**Nhóm:** Nguyễn Thành An (23162001) — Huỳnh Thanh Tú (23162111) — Xín Lợi Huy (23110231)
-
 ---
 
 ## 1. HIỂU GÌ VỀ ĐỀ TÀI
