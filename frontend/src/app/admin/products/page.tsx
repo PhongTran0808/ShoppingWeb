@@ -46,6 +46,7 @@ export default function AdminProductsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [editId, setEditId] = useState<number | null>(null);
 
@@ -55,6 +56,7 @@ export default function AdminProductsPage() {
     setEditId(product.id);
     setNewProductName(product.name);
     setNewProductPrice(product.price.toString());
+    setNewProductCategory(product.categoryId || (product.category === 'Laptop' ? 2 : product.category === 'Accessories' ? 3 : 1));
     setIsAddModalOpen(true);
   };
 
@@ -66,8 +68,8 @@ export default function AdminProductsPage() {
     const productPayload = {
       name: newProductName,
       price,
-      categoryId: 1, // Mặc định là danh mục 1
-      category: "Mới", // Giữ lại dự phòng cho logic Frontend cũ nếu có
+      categoryId: newProductCategory,
+      category: newProductCategory === 1 ? "Smartphone" : newProductCategory === 2 ? "Laptop" : "Accessories",
       slug: newProductName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now(),
       stock: 100,
       isActive: true
@@ -88,7 +90,7 @@ export default function AdminProductsPage() {
           localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
         } else {
           // Fallback lưu local nếu API lỗi
-          const newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price } : p);
+          const newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price, categoryId: newProductCategory, category: productPayload.category } : p);
           setProducts(newProducts);
           localStorage.setItem("vault_admin_products", JSON.stringify(newProducts));
         }
@@ -117,7 +119,7 @@ export default function AdminProductsPage() {
       // Fallback
       let newProducts;
       if (editId !== null) {
-        newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price } : p);
+        newProducts = products.map(p => p.id === editId ? { ...p, name: newProductName, price, categoryId: newProductCategory, category: productPayload.category } : p);
       } else {
         newProducts = [...products, { id: Date.now(), ...productPayload }];
       }
@@ -128,6 +130,7 @@ export default function AdminProductsPage() {
     setIsAddModalOpen(false);
     setNewProductName("");
     setNewProductPrice("");
+    setNewProductCategory(1);
     setEditId(null);
   };
 
@@ -165,6 +168,7 @@ export default function AdminProductsPage() {
           setEditId(null);
           setNewProductName("");
           setNewProductPrice("");
+          setNewProductCategory(1);
           setIsAddModalOpen(true);
         }} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg">
           <Plus className="w-4 h-4 mr-2" /> Thêm Sản phẩm
@@ -267,6 +271,18 @@ export default function AdminProductsPage() {
                   className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="Ví dụ: 30000000"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Danh mục</label>
+                <select 
+                  value={newProductCategory}
+                  onChange={(e) => setNewProductCategory(parseInt(e.target.value))}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 appearance-none cursor-pointer"
+                >
+                  <option value={1} className="bg-zinc-900 text-white">Smartphone</option>
+                  <option value={2} className="bg-zinc-900 text-white">Laptop</option>
+                  <option value={3} className="bg-zinc-900 text-white">Accessories</option>
+                </select>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-8">
