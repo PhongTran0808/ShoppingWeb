@@ -12,8 +12,23 @@ export default function Navbar() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem("vault_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const token = localStorage.getItem("vault_token");
+    if (savedUser && token) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        const payloadJson = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const parsedPayload = JSON.parse(payloadJson);
+        const actualRole = parsedPayload.role || parsedPayload.roles || parsedPayload.authorities || "";
+        
+        const userObj = JSON.parse(savedUser);
+        userObj.role = actualRole.includes("ROLE_ADMIN") ? "ROLE_ADMIN" : "ROLE_USER";
+        setUser(userObj);
+      } catch (e) {
+        setUser(JSON.parse(savedUser));
+      }
     }
   }, []);
 

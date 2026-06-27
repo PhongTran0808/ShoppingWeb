@@ -11,17 +11,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminName, setAdminName] = useState("");
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("vault_user");
-    if (!savedUser) {
+    const token = localStorage.getItem("vault_token");
+    if (!token) {
       router.push("/login");
       return;
     }
-    const parsedUser = JSON.parse(savedUser);
-    if (parsedUser.role !== "ROLE_ADMIN") {
+    try {
+      // Giải mã JWT Token (phần thứ 2: Payload)
+      const payloadBase64 = token.split(".")[1];
+      // JWT dùng Base64Url, nên cần replace '-' thành '+' và '_' thành '/'
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const payloadJson = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const parsedPayload = JSON.parse(payloadJson);
+      
+      // Kiểm tra thực sự có quyền ROLE_ADMIN trong Token không
+      // Tuỳ backend, có thể là 'role', 'roles', hoặc 'authorities'. Theo như cũ, ta dùng 'role'.
+      const role = parsedPayload.role || parsedPayload.roles || parsedPayload.authorities || "";
+      if (!role.includes("ROLE_ADMIN")) {
+        router.push("/login");
+        return;
+      }
+      
+      // Chỉ để lấy tên hiển thị
+      const savedUser = localStorage.getItem("vault_user");
+      if (savedUser) {
+        setAdminName(JSON.parse(savedUser).username);
+      } else {
+        setAdminName(parsedPayload.sub || "Admin");
+      }
+    } catch (e) {
+      console.error("Lỗi xác thực Token:", e);
       router.push("/login");
-      return;
     }
-    setAdminName(parsedUser.username);
   }, [router]);
 
   const navItems = [
