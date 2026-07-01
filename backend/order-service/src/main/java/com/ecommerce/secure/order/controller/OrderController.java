@@ -37,6 +37,49 @@ public class OrderController {
 
         String address = payload.get("shippingAddress");
         String phone = payload.get("phoneNumber");
+        String timestamp = payload.get("timestamp");
+        String signature = payload.get("signature");
+        String publicKeyBase64 = payload.get("publicKey");
+
+        // Bắt buộc xác thực chữ ký số bất đối xứng (ECDSA P-256)
+        if (signature != null && publicKeyBase64 != null && timestamp != null) {
+            try {
+                // 1. Tái cấu trúc chuỗi payload để xác thực chữ ký
+                String dataToVerify = address + ":" + phone + ":" + timestamp;
+                byte[] dataBytes = dataToVerify.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+                // 2. Decode Public Key từ Base64
+                byte[] keyBytes = java.util.Base64.getDecoder().decode(publicKeyBase64.trim());
+                java.security.spec.X509EncodedKeySpec spec = new java.security.spec.X509EncodedKeySpec(keyBytes);
+                java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC");
+                java.security.PublicKey pubKey = kf.generatePublic(spec);
+
+                // 3. Xác thực chữ ký số bằng SHA256withECDSA
+                java.security.Signature ecdsaVerify = java.security.Signature.getInstance("SHA256withECDSA");
+                ecdsaVerify.initVerify(pubKey);
+                ecdsaVerify.update(dataBytes);
+                
+                byte[] sigBytes = java.util.Base64.getDecoder().decode(signature.trim());
+                boolean isValid = ecdsaVerify.verify(sigBytes);
+
+                System.out.println("\n=================================================");
+                System.out.println("[CRYPTOGRAPHIC AUDIT] ORDER SIGNATURE VERIFICATION");
+                System.out.println("Plaintext Payload : " + dataToVerify);
+                System.out.println("Public Key Base64 : " + publicKeyBase64.substring(0, Math.min(publicKeyBase64.length(), 40)) + "...");
+                System.out.println("Signature Base64  : " + signature.substring(0, Math.min(signature.length(), 40)) + "...");
+                System.out.println("Verification Status: " + (isValid ? "SUCCESS (APPROVED)" : "FAILED (REJECTED)"));
+                System.out.println("=================================================\n");
+
+                if (!isValid) {
+                    throw new SecurityException("Giao dịch bị từ chối! Chữ ký số không hợp lệ hoặc dữ liệu đơn hàng đã bị sửa đổi.");
+                }
+            } catch (Exception e) {
+                System.err.println("[CRYPTOGRAPHIC ERROR] Signature verification failed: " + e.getMessage());
+                throw new SecurityException("Lỗi xác thực mật mã: " + e.getMessage());
+            }
+        } else {
+            throw new SecurityException("Giao dịch bị từ chối! Thiếu chữ ký số giao dịch chống chối bỏ.");
+        }
 
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null) {

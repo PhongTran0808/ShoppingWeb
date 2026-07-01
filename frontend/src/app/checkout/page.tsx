@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [showQR, setShowQR] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [cryptoProof, setCryptoProof] = useState<{signature: string, publicKey: string} | null>(null);
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -91,10 +92,50 @@ export default function CheckoutPage() {
         });
       }
 
-      // 2. Create Order via API
+      // 2. Create Order with ECDSA Digital Signature (Non-repudiation)
+      const timestamp = Date.now().toString();
+      const payloadString = address + ":" + phone + ":" + timestamp;
+
+      // Sinh cặp khóa ECDSA P-256
+      const keyPair = await window.crypto.subtle.generateKey(
+        {
+          name: "ECDSA",
+          namedCurve: "P-256",
+        },
+        true,
+        ["sign", "verify"]
+      );
+
+      // Ký số dữ liệu bằng Private Key
+      const encoder = new TextEncoder();
+      const dataToSign = encoder.encode(payloadString);
+      const signatureBuffer = await window.crypto.subtle.sign(
+        {
+          name: "ECDSA",
+          hash: { name: "SHA-256" },
+        },
+        keyPair.privateKey,
+        dataToSign
+      );
+
+      // Xuất Public Key dạng SPKI (để gửi lên Java Backend)
+      const exportedPublicKey = await window.crypto.subtle.exportKey(
+        "spki",
+        keyPair.publicKey
+      );
+
+      // Chuyển đổi sang Base64
+      const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
+      const publicKeyB64 = btoa(String.fromCharCode(...new Uint8Array(exportedPublicKey)));
+
+      setCryptoProof({ signature: signatureB64, publicKey: publicKeyB64 });
+
       const payload = {
         shippingAddress: address,
-        phoneNumber: phone
+        phoneNumber: phone,
+        timestamp: timestamp,
+        signature: signatureB64,
+        publicKey: publicKeyB64
       };
 
       const res = await fetch("/api/orders", {
@@ -174,11 +215,16 @@ export default function CheckoutPage() {
               <span className="font-bold text-emerald-400">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
               </span>
+            <div className="flex justify-between flex-col mt-2 pt-2 border-t border-white/5">
+              <span className="text-zinc-400 mb-1">Chữ ký số ECDSA (Trích xuất):</span>
+              <span className="font-mono text-emerald-500 text-xs truncate">
+                {cryptoProof?.signature ? cryptoProof.signature.substring(0, 40) + "..." : "Đang tạo..."}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">HMAC Hash:</span>
-              <span className="font-mono text-zinc-500 text-xs truncate max-w-[150px]">
-                {Math.random().toString(36).substring(2, 15)}...
+            <div className="flex justify-between flex-col mt-1">
+              <span className="text-zinc-400 mb-1">Public Key SPKI (Trích xuất):</span>
+              <span className="font-mono text-indigo-400 text-xs truncate">
+                {cryptoProof?.publicKey ? cryptoProof.publicKey.substring(0, 40) + "..." : "Đang tạo..."}
               </span>
             </div>
           </div>
@@ -212,10 +258,28 @@ export default function CheckoutPage() {
             <CheckCircle2 className="w-12 h-12 text-emerald-400" />
           </div>
           <h1 className="text-3xl font-bold mb-4">Đặt hàng thành công!</h1>
-          <p className="text-zinc-400 mb-8 leading-relaxed">
-            Mã đơn hàng: <span className="font-mono text-indigo-400">#ORD-{Math.floor(Math.random() * 900000) + 100000}</span><br/>
-            Cảm ơn {user?.username} đã mua sắm. Toàn bộ thông tin đơn hàng đã được mã hóa Field-Level Encryption trước khi lưu trữ để đảm bảo an toàn tuyệt đối.
+          <p className="text-zinc-400 mb-6 leading-relaxed">
+            Mã đơn hàng: <span className="font-mono text-indigo-400">#{orderId}</span><br/>
+            Cảm ơn {user?.username} đã mua sắm. Thông tin đơn hàng đã được bảo vệ bằng Mã hóa Field-Level Encryption.
           </p>
+
+          {cryptoProof && (
+            <div className="w-full bg-black/40 border border-emerald-500/20 p-4 rounded-xl mb-8 text-left space-y-3">
+              <div className="flex items-center gap-2 text-emerald-400 mb-2">
+                <ShieldCheck className="w-5 h-5" />
+                <span className="font-semibold text-sm">Bằng chứng Mật mã học (Non-repudiation)</span>
+              </div>
+              <div>
+                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Chữ ký số (ECDSA P-256 Signature)</div>
+                <div className="font-mono text-xs text-zinc-300 break-all bg-black/50 p-2 rounded border border-white/5">{cryptoProof.signature}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Khóa công khai (SPKI Public Key)</div>
+                <div className="font-mono text-xs text-zinc-300 break-all bg-black/50 p-2 rounded border border-white/5">{cryptoProof.publicKey}</div>
+              </div>
+            </div>
+          )}
+
           <Link href="/catalog" className="w-full">
             <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-lg">
               Tiếp tục mua sắm
